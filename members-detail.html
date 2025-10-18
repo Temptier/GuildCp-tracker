@@ -120,7 +120,7 @@
     </div>
   </section>
 
-  <!-- Firebase & Dynamic Scripts -->
+  <!-- Firebase & Scripts -->
   <script>
     // Firebase config
     const firebaseConfig = {
@@ -140,67 +140,73 @@
       return urlParams.get(param);
     }
     const memberId = getQueryParam('id');
+    let m; // store member data
 
-    let m; // store member data globally
+    function renderMemberData(doc) {
+      m = doc.data();
 
+      // Header
+      document.querySelector('h2').textContent = m.name;
+      const classBadge = document.querySelector('.class-badge');
+      classBadge.textContent = m.class;
+      classBadge.className = 'class-badge ' + m.classColor;
+      document.querySelector('img').src = m.avatar;
+
+      // Stats
+      const stats = document.querySelectorAll('.text-2xl.font-bold');
+      stats[0].textContent = m.cp.toLocaleString();
+      stats[1].textContent = (m.growth >=0 ? '+' : '') + (m.growth || 0).toLocaleString();
+      stats[2].textContent = '#' + (m.rank || '-');
+      stats[3].textContent = 'Week ' + (m.weeklyCP?.length || 1);
+
+      // Weekly table
+      const tbody = document.querySelector('tbody');
+      const weeklyData = m.weeklyCP && m.weeklyCP.length ? m.weeklyCP : [{week:'Week 1', cp:0, growth:0, rank:'-'}];
+      tbody.innerHTML = weeklyData.map(w => `
+        <tr class="border-b border-gray-700">
+          <td class="py-3">${w.week}</td>
+          <td class="py-3 font-bold">${w.cp.toLocaleString()}</td>
+          <td class="py-3 text-green-400">${w.growth>=0?'+':''}${w.growth.toLocaleString()}</td>
+          <td class="py-3">${w.rank || '-'}</td>
+        </tr>
+      `).join('');
+
+      // Progress Chart
+      const ctx = document.getElementById('memberProgressChart').getContext('2d');
+      if(window.memberChart) window.memberChart.destroy(); // destroy previous chart if exists
+      window.memberChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: weeklyData.map(w => w.week),
+          datasets: [{
+            label: 'Combat Power',
+            data: weeklyData.map(w => w.cp),
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+            x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+          }
+        }
+      });
+
+      feather.replace();
+    }
+
+    // Fetch member data
     if(memberId){
       db.collection('members').doc(memberId).get().then(doc => {
         if(!doc.exists) return alert("Member not found");
-        m = doc.data();
-
-        // Header
-        document.querySelector('h2').textContent = m.name;
-        const classBadge = document.querySelector('.class-badge');
-        classBadge.textContent = m.class;
-        classBadge.className = 'class-badge ' + m.classColor;
-        document.querySelector('img').src = m.avatar;
-
-        // Stats
-        const stats = document.querySelectorAll('.text-2xl.font-bold');
-        stats[0].textContent = m.cp.toLocaleString();
-        stats[1].textContent = (m.growth >=0 ? '+' : '') + (m.growth || 0).toLocaleString();
-        stats[2].textContent = '#' + (m.rank || '-');
-        stats[3].textContent = 'Week ' + (m.weeklyCP?.length || 1);
-
-        // Weekly table
-        const tbody = document.querySelector('tbody');
-        tbody.innerHTML = m.weeklyCP.map(w => `
-          <tr class="border-b border-gray-700">
-            <td class="py-3">${w.week}</td>
-            <td class="py-3 font-bold">${w.cp.toLocaleString()}</td>
-            <td class="py-3 text-green-400">${w.growth>=0?'+':''}${w.growth.toLocaleString()}</td>
-            <td class="py-3">${w.rank || '-'}</td>
-          </tr>
-        `).join('');
-
-        // Progress Chart
-        const memberCtx = document.getElementById('memberProgressChart').getContext('2d');
-        new Chart(memberCtx, {
-          type: 'line',
-          data: {
-            labels: m.weeklyCP.map(w => w.week),
-            datasets: [{
-              label: 'Combat Power',
-              data: m.weeklyCP.map(w => w.cp),
-              borderColor: '#3b82f6',
-              backgroundColor: 'rgba(59, 130, 246, 0.1)',
-              tension: 0.4,
-              fill: true
-            }]
-          },
-          options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-              x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
-            }
-          }
-        });
-
-        feather.replace();
-      });
+        renderMemberData(doc);
+      }).catch(err => alert("Error fetching member: " + err.message));
     } else {
       alert("No member ID provided");
     }
@@ -213,19 +219,22 @@
 
       const currentCp = m.cp || 0;
       const growth = newCpValue - currentCp;
+      const weekLabel = `Week ${m.weeklyCP ? m.weeklyCP.length + 1 : 1}`;
 
       db.collection('members').doc(memberId).update({
         cp: newCpValue,
         growth: growth,
         weeklyCP: firebase.firestore.FieldValue.arrayUnion({
-          week: `Week ${m.weeklyCP.length + 1}`,
+          week: weekLabel,
           cp: newCpValue,
           growth: growth,
           rank: m.rank
         })
       }).then(() => {
+        // Fetch updated data and re-render chart instantly
+        db.collection('members').doc(memberId).get().then(doc => renderMemberData(doc));
+        document.getElementById('newCp').value = '';
         alert("CP updated successfully");
-        location.reload();
       }).catch(err => alert("Error updating CP: " + err.message));
     });
 
