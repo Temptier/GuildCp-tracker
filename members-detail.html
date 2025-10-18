@@ -116,14 +116,37 @@
     feather.replace();
 
     // Member Progress Chart
-    const memberCtx = document.getElementById('memberProgressChart').getContext('2d');
-    new Chart(memberCtx, {
+   
+
+const urlParams = new URLSearchParams(window.location.search);
+const memberId = urlParams.get('id');
+
+fetch('static/data/members.json')
+  .then(res => res.json())
+  .then(members => {
+    const member = members.find(m => m.id === memberId);
+    if (!member) return;
+
+    document.title = `${member.name} - GuildPower Tracker Pro`;
+    document.querySelector('h2').textContent = member.name;
+    document.querySelector('img').src = member.avatar;
+    document.querySelector('.class-badge').textContent = member.class;
+    document.querySelector('.class-badge').classList.add(member.classColor);
+
+    // Update stats
+    document.querySelectorAll('.text-2xl.font-bold')[0].textContent = member.cp.toLocaleString();
+    document.querySelectorAll('.text-2xl.font-bold.text-green-400')[0].textContent = `+${member.growth.toLocaleString()}`;
+    document.querySelectorAll('.text-2xl.font-bold')[1].textContent = `#${member.rank}`;
+
+    // Chart
+    const ctx = document.getElementById('memberProgressChart').getContext('2d');
+    new Chart(ctx, {
       type: 'line',
       data: {
-        labels: ['Week 12', 'Week 13', 'Week 14', 'Week 15', 'Week 16'],
+        labels: member.history.map((_, i) => `Week ${i + 1}`),
         datasets: [{
           label: 'Combat Power',
-          data: [9800, 10500, 11200, 13989, 15234],
+          data: member.history,
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           tension: 0.4,
@@ -133,20 +156,14 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false }
-        },
+        plugins: { legend: { display: false } },
         scales: {
-          y: {
-            beginAtZero: false,
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-          },
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.1)' }
-          }
+          y: { grid: { color: 'rgba(255,255,255,0.1)' } },
+          x: { grid: { color: 'rgba(255,255,255,0.1)' } }
         }
       }
     });
+  });
   </script>
 
 </body>
