@@ -98,29 +98,18 @@
           </div>
         </div>
 
-<!-- Update CP Section -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mt-6">
-          <h3 class="text-xl font-bold mb-4">Update Combat Power</h3>
-          <form id="updateCpForm" class="flex flex-col sm:flex-row gap-4">
-            <input type="number" id="newCp" placeholder="New CP" class="w-full sm:w-auto flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
-            <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-6 rounded-lg transition-colors">
-              Update CP
-            </button>
-          </form>
-        </div>
-
-        <!-- Delete Member -->
-        <div class="mt-4 text-right">
-          <button id="deleteMemberBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
-            Delete Member
-          </button>
-        </div>
-
-      </div>
+</div>
     </div>
   </section>
 
-  <!-- Firebase & Scripts -->
+  <!-- Update/Delete Buttons -->
+  <section class="py-6 container mx-auto px-6">
+    <div class="flex gap-4 justify-center">
+      <button id="updateCP" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-6 rounded-lg">Update CP</button>
+      <button id="deleteMember" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-lg">Delete Member</button>
+    </div>
+  </section>
+
   <script>
     // Firebase config
     const firebaseConfig = {
@@ -140,60 +129,66 @@
       return urlParams.get(param);
     }
     const memberId = getQueryParam('id');
-    let m; // store member data
+    let memberData = null;
 
     function renderMemberData(doc) {
-      m = doc.data();
+      if (!doc.exists) { alert("Member not found"); return; }
+      const m = doc.data();
+      memberData = m; // store globally
 
-      // Header
-      document.querySelector('h2').textContent = m.name;
+      const h2 = document.querySelector('h2');
+      const img = document.querySelector('img');
       const classBadge = document.querySelector('.class-badge');
-      classBadge.textContent = m.class;
-      classBadge.className = 'class-badge ' + m.classColor;
-      document.querySelector('img').src = m.avatar;
+      if(h2) h2.textContent = m.name || "Unknown";
+      if(classBadge){
+        classBadge.textContent = m.class || "Unknown";
+        classBadge.className = 'class-badge ' + (m.classColor || 'bg-gray-500');
+      }
+      if(img) img.src = m.avatar || "https://via.placeholder.com/200";
 
-      // Stats
       const stats = document.querySelectorAll('.text-2xl.font-bold');
-      stats[0].textContent = m.cp.toLocaleString();
-      stats[1].textContent = (m.growth >=0 ? '+' : '') + (m.growth || 0).toLocaleString();
-      stats[2].textContent = '#' + (m.rank || '-');
-      stats[3].textContent = 'Week ' + (m.weeklyCP?.length || 1);
+      if(stats.length >= 4){
+        stats[0].textContent = (m.cp || 0).toLocaleString();
+        stats[1].textContent = ((m.growth||0)>=0?'+':'') + (m.growth||0).toLocaleString();
+        stats[2].textContent = '#' + (m.rank || '-');
+        stats[3].textContent = 'Week ' + ((m.weeklyCP && m.weeklyCP.length) || 1);
+      }
 
-      // Weekly table
       const tbody = document.querySelector('tbody');
-      const weeklyData = m.weeklyCP && m.weeklyCP.length ? m.weeklyCP : [{week:'Week 1', cp:0, growth:0, rank:'-'}];
-      tbody.innerHTML = weeklyData.map(w => `
-        <tr class="border-b border-gray-700">
-          <td class="py-3">${w.week}</td>
-          <td class="py-3 font-bold">${w.cp.toLocaleString()}</td>
-          <td class="py-3 text-green-400">${w.growth>=0?'+':''}${w.growth.toLocaleString()}</td>
-          <td class="py-3">${w.rank || '-'}</td>
-        </tr>
-      `).join('');
+      const weeklyData = (m.weeklyCP && m.weeklyCP.length) ? m.weeklyCP : [{week:'Week 1', cp:0, growth:0, rank:'-'}];
+      if(tbody){
+        tbody.innerHTML = weeklyData.map(w => `
+          <tr class="border-b border-gray-700">
+            <td class="py-3">${w.week}</td>
+            <td class="py-3 font-bold">${(w.cp||0).toLocaleString()}</td>
+            <td class="py-3 text-green-400">${(w.growth>=0?'+':'') + (w.growth||0).toLocaleString()}</td>
+            <td class="py-3">${w.rank || '-'}</td>
+          </tr>
+        `).join('');
+      }
 
-      // Progress Chart
       const ctx = document.getElementById('memberProgressChart').getContext('2d');
-      if(window.memberChart) window.memberChart.destroy(); // destroy previous chart if exists
+      if(window.memberChart) window.memberChart.destroy();
       window.memberChart = new Chart(ctx, {
-        type: 'line',
+        type:'line',
         data: {
-          labels: weeklyData.map(w => w.week),
-          datasets: [{
-            label: 'Combat Power',
-            data: weeklyData.map(w => w.cp),
-            borderColor: '#3b82f6',
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-            tension: 0.4,
-            fill: true
+          labels: weeklyData.map(w=>w.week),
+          datasets:[{
+            label:'Combat Power',
+            data: weeklyData.map(w=>w.cp||0),
+            borderColor:'#3b82f6',
+            backgroundColor:'rgba(59,130,246,0.1)',
+            tension:0.4,
+            fill:true
           }]
         },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
-            x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{legend:{display:false}},
+          scales:{
+            y:{beginAtZero:false, grid:{color:'rgba(255,255,255,0.1)'}},
+            x:{grid:{color:'rgba(255,255,255,0.1)'}}
           }
         }
       });
@@ -201,50 +196,43 @@
       feather.replace();
     }
 
-    // Fetch member data
+    // Fetch member
     if(memberId){
-      db.collection('members').doc(memberId).get().then(doc => {
-        if(!doc.exists) return alert("Member not found");
-        renderMemberData(doc);
-      }).catch(err => alert("Error fetching member: " + err.message));
-    } else {
-      alert("No member ID provided");
-    }
+      db.collection('members').doc(memberId).get()
+        .then(doc=>renderMemberData(doc))
+        .catch(err=>alert("Error fetching member: "+err));
+    } else alert("No member ID provided");
 
     // Update CP
-    document.getElementById('updateCpForm').addEventListener('submit', e => {
-      e.preventDefault();
-      const newCpValue = parseInt(document.getElementById('newCp').value);
-      if (!newCpValue || newCpValue < 0) return alert("Enter a valid CP");
+    document.getElementById('updateCP').addEventListener('click',()=>{
+      if(!memberData) return alert("Member data not loaded yet");
+      const newCP = prompt("Enter new CP:", memberData.cp || 0);
+      if(newCP!==null){
+        const cpVal = parseInt(newCP);
+        if(isNaN(cpVal)) return alert("Invalid number");
+        const growth = cpVal - (memberData.cp || 0);
+        const weekLabel = "Week " + ((memberData.weeklyCP?.length||0)+1);
+        const weeklyEntry = {week: weekLabel, cp: cpVal, growth: growth, rank: '-'};
 
-      const currentCp = m.cp || 0;
-      const growth = newCpValue - currentCp;
-      const weekLabel = `Week ${m.weeklyCP ? m.weeklyCP.length + 1 : 1}`;
+        const updatedWeekly = memberData.weeklyCP ? [...memberData.weeklyCP, weeklyEntry] : [weeklyEntry];
 
-      db.collection('members').doc(memberId).update({
-        cp: newCpValue,
-        growth: growth,
-        weeklyCP: firebase.firestore.FieldValue.arrayUnion({
-          week: weekLabel,
-          cp: newCpValue,
+        db.collection('members').doc(memberId).update({
+          cp: cpVal,
           growth: growth,
-          rank: m.rank
-        })
-      }).then(() => {
-        // Fetch updated data and re-render chart instantly
-        db.collection('members').doc(memberId).get().then(doc => renderMemberData(doc));
-        document.getElementById('newCp').value = '';
-        alert("CP updated successfully");
-      }).catch(err => alert("Error updating CP: " + err.message));
+          weeklyCP: updatedWeekly
+        }).then(()=>{
+          alert("CP updated");
+          db.collection('members').doc(memberId).get().then(doc=>renderMemberData(doc));
+        }).catch(err=>alert("Error updating CP: "+err));
+      }
     });
 
-    // Delete member
-    document.getElementById('deleteMemberBtn').addEventListener('click', () => {
-      if(confirm("Are you sure you want to delete this member? This cannot be undone.")){
-        db.collection('members').doc(memberId).delete().then(() => {
-          alert("Member deleted");
-          window.location.href = 'index.html';
-        }).catch(err => alert("Error deleting member: " + err.message));
+    // Delete Member
+    document.getElementById('deleteMember').addEventListener('click',()=>{
+      if(confirm("Are you sure you want to delete this member?")){
+        db.collection('members').doc(memberId).delete()
+          .then(()=>{ alert("Member deleted"); window.location.href='index.html'; })
+          .catch(err=>alert("Error deleting member: "+err));
       }
     });
   </script>
