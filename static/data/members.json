@@ -1,0 +1,35 @@
+[
+  {
+    "id": "aragorn",
+    "name": "Aragorn",
+    "class": "Sword & Shield",
+    "classColor": "bg-blue-500",
+    "avatar": "http://static.photos/fantasy/200x200/1",
+    "cp": 15234,
+    "growth": 1245,
+    "rank": 3,
+    "history": [9800, 10500, 11200, 13989, 15234]
+  },
+  {
+    "id": "legolas",
+    "name": "Legolas",
+    "class": "Bow",
+    "classColor": "bg-teal-500",
+    "avatar": "http://static.photos/fantasy/200x200/2",
+    "cp": 18567,
+    "growth": 2134,
+    "rank": 1,
+    "history": [13500, 14200, 15700, 17000, 18567]
+  },
+  {
+    "id": "gimli",
+    "name": "Gimli",
+    "class": "Bare Hand",
+    "classColor": "bg-red-500",
+    "avatar": "http://static.photos/fantasy/200x200/3",
+    "cp": 14500,
+    "growth": 2000,
+    "rank": 2,
+    "history": [9500, 11000, 12300, 13400, 14500]
+  }
+]
