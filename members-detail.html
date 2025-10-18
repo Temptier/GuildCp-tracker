@@ -1,157 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Member Detail - GuildPower Tracker Pro</title>
-<link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-<script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://unpkg.com/feather-icons"></script>
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
-<style>
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
-.medieval-font { font-family: 'MedievalSharp', cursive; }
-.class-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
-</style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Member Detail - GuildPower Tracker Pro</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
+    .medieval-font { font-family: 'MedievalSharp', cursive; }
+    .class-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  </style>
 </head>
+
 <body class="bg-gray-900 text-white font-['Inter']">
 
-<!-- Navigation -->
-<nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
-  <div class="flex items-center space-x-2">
-    <a href="index.html" class="flex items-center space-x-2">
-      <i data-feather="arrow-left" class="text-yellow-400"></i>
-      <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
-    </a>
-  </div>
-</nav>
-
-<!-- Member Detail Section -->
-<section class="py-12">
-  <div class="container mx-auto px-6">
-    <div class="max-w-4xl mx-auto">
-      <div id="member-header" class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
-        <!-- Dynamic member header -->
-      </div>
-
-      <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
-        <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
-        <div class="h-80">
-          <canvas id="memberProgressChart"></canvas>
-        </div>
-      </div>
-
-      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full" id="weekly-cp-table">
-            <thead>
-              <tr class="border-b border-gray-700">
-                <th class="text-left py-3">Week</th>
-                <th class="text-left py-3">Combat Power</th>
-                <th class="text-left py-3">Growth</th>
-                <th class="text-left py-3">Rank</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Dynamic rows -->
-            </tbody>
-          </table>
-        </div>
-      </div>
+  <!-- Navigation -->
+  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <a href="index.html" class="flex items-center space-x-2">
+        <i data-feather="arrow-left" class="text-yellow-400"></i>
+        <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
+      </a>
     </div>
-  </div>
-</section>
+  </nav>
 
-<script>
-  // --- Firebase config ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
-    authDomain: "guildcombatpower.firebaseapp.com",
-    projectId: "guildcombatpower",
-    storageBucket: "guildcombatpower.firebasestorage.app",
-    messagingSenderId: "862355543279",
-    appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  feather.replace();
-
-  // --- Get member ID from URL ---
-  const urlParams = new URLSearchParams(window.location.search);
-  const memberId = urlParams.get('id');
-
-  if(!memberId) {
-    alert("No member selected!");
-    window.location.href = "index.html";
-  }
-
-  const memberHeader = document.getElementById('member-header');
-  const weeklyTableBody = document.querySelector('#weekly-cp-table tbody');
-  const ctx = document.getElementById('memberProgressChart').getContext('2d');
-  let chart;
-
-  // --- Load member data ---
-  db.collection('members').doc(memberId).get().then(doc => {
-    if(!doc.exists) {
-      alert("Member not found!");
-      window.location.href = "index.html";
-    }
-    const m = doc.data();
-
-    // --- Member Header ---
-    memberHeader.innerHTML = `
-      <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-        <img src="${m.avatar}" alt="${m.name}" class="w-32 h-32 rounded-full border-4 border-yellow-400">
-        <div class="flex-1 text-center md:text-left">
-          <h2 class="text-4xl font-bold mb-2 medieval-font">${m.name}</h2>
-          <span class="class-badge ${m.classColor} text-lg text-white">${m.class}</span>
-          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center"><p class="text-gray-400">Current CP</p><p class="text-2xl font-bold">${(m.cp||0).toLocaleString()}</p></div>
-            <div class="text-center"><p class="text-gray-400">Weekly Growth</p><p class="text-2xl font-bold text-green-400">+${(m.growth||0).toLocaleString()}</p></div>
-            <div class="text-center"><p class="text-gray-400">Rank</p><p class="text-2xl font-bold">#${m.rank||'-'}</p></div>
-            <div class="text-center"><p class="text-gray-400">Member Since</p><p class="text-xl font-bold">Week 1</p></div>
+  <!-- Member Detail Section -->
+  <section class="py-12">
+    <div class="container mx-auto px-6">
+      <div class="max-w-4xl mx-auto">
+        
+        <!-- Member Header -->
+        <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
+          <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+            <img src="" alt="Member Avatar" class="w-32 h-32 rounded-full border-4 border-yellow-400">
+            <div class="flex-1 text-center md:text-left">
+              <h2 class="text-4xl font-bold mb-2 medieval-font">Member Name</h2>
+              <span class="class-badge bg-blue-500 text-white text-lg">Class</span>
+              <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                  <p class="text-gray-400">Current CP</p>
+                  <p class="text-2xl font-bold">0</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Weekly Growth</p>
+                  <p class="text-2xl font-bold text-green-400">0</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Rank</p>
+                  <p class="text-2xl font-bold">#-</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Member Since</p>
+                  <p class="text-xl font-bold">Week 1</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Progress Chart -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+          <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
+          <div class="h-80">
+            <canvas id="memberProgressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Weekly Data Table -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-700">
+                  <th class="text-left py-3">Week</th>
+                  <th class="text-left py-3">Combat Power</th>
+                  <th class="text-left py-3">Growth</th>
+                  <th class="text-left py-3">Rank</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Rows will be dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
       </div>
-    `;
+    </div>
+  </section>
 
-    // --- Weekly Table ---
-    weeklyTableBody.innerHTML = '';
-    const weeks = m.weeklyCP || [];
-    weeks.forEach(w => {
-      const row = document.createElement('tr');
-      row.className = 'border-b border-gray-700';
-      row.innerHTML = `
-        <td class="py-3">${w.week}</td>
-        <td class="py-3 font-bold">${(w.cp||0).toLocaleString()}</td>
-        <td class="py-3 text-green-400">+${(w.growth||0).toLocaleString()}</td>
-        <td class="py-3">${w.rank||'-'}</td>
-      `;
-      weeklyTableBody.appendChild(row);
-    });
+  <!-- Firebase & Dynamic Scripts -->
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
+      authDomain: "guildcombatpower.firebaseapp.com",
+      projectId: "guildcombatpower",
+      storageBucket: "guildcombatpower.firebasestorage.app",
+      messagingSenderId: "862355543279",
+      appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
 
-    // --- Chart ---
-    chart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: weeks.map(w=>w.week),
-        datasets: [{
-          label: 'Combat Power',
-          data: weeks.map(w=>w.cp),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246,0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false, grid:{color:'rgba(255,255,255,0.1)'}},x:{grid:{color:'rgba(255,255,255,0.1)'}}} }
-    });
-  });
-</script>
+    // Get member ID from URL
+    function getQueryParam(param) {
+      const urlParams = new URLSearchParams(window.location.search);
+      return urlParams.get(param);
+    }
+    const memberId = getQueryParam('id');
+
+    // Fetch member data and populate page
+    if(memberId){
+      db.collection('members').doc(memberId).get().then(doc => {
+        if(!doc.exists) return alert("Member not found");
+        const m = doc.data();
+
+        // Header
+        document.querySelector('h2').textContent = m.name;
+        const classBadge = document.querySelector('.class-badge');
+        classBadge.textContent = m.class;
+        classBadge.className = 'class-badge ' + m.classColor;
+        document.querySelector('img').src = m.avatar;
+
+        // Stats
+        const stats = document.querySelectorAll('.text-2xl.font-bold');
+        stats[0].textContent = m.cp.toLocaleString();
+        stats[1].textContent = (m.growth >=0 ? '+' : '') + (m.growth || 0).toLocaleString();
+        stats[2].textContent = '#' + (m.rank || '-');
+        stats[3].textContent = 'Week ' + (m.weeklyCP?.length || 1);
+
+        // Weekly table
+        const tbody = document.querySelector('tbody');
+        tbody.innerHTML = m.weeklyCP.map(w => `
+          <tr class="border-b border-gray-700">
+            <td class="py-3">${w.week}</td>
+            <td class="py-3 font-bold">${w.cp.toLocaleString()}</td>
+            <td class="py-3 text-green-400">${w.growth>=0?'+':''}${w.growth.toLocaleString()}</td>
+            <td class="py-3">${w.rank || '-'}</td>
+          </tr>
+        `).join('');
+
+        // Progress Chart
+        const memberCtx = document.getElementById('memberProgressChart').getContext('2d');
+        new Chart(memberCtx, {
+          type: 'line',
+          data: {
+            labels: m.weeklyCP.map(w => w.week),
+            datasets: [{
+              label: 'Combat Power',
+              data: m.weeklyCP.map(w => w.cp),
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.4,
+              fill: true
+            }]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+              x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+            }
+          }
+        });
+
+        feather.replace();
+      });
+    } else {
+      alert("No member ID provided");
+    }
+  </script>
+
 </body>
 </html>
