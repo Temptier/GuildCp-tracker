@@ -147,9 +147,169 @@
 <section id="admin" class="py-16 bg-gray-900">
   <div class="container mx-auto px-6">
     <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Admin Dashboard</h2>
+
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <!-- Add Member & Update/Delete Member Forms -->
-      <!-- PASTE the Integrated Admin Forms code from previous message here -->
+
+      <!-- Add Member Form -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-bold mb-6">Add New Member</h3>
+        <form id="add-member-form" class="space-y-4">
+          <input type="text" id="new-member-name" placeholder="Member Name" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
+          <select id="new-member-class" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
+            <option value="">Select Class</option>
+            <option value="Bare Hand" data-color="bg-red-500">Bare Hand</option>
+            <option value="Sword & Shield" data-color="bg-blue-500">Sword & Shield</option>
+            <option value="Battle Staff" data-color="bg-purple-500">Battle Staff</option>
+            <option value="Battle Shield" data-color="bg-green-500">Battle Shield</option>
+            <option value="Great Sword" data-color="bg-yellow-500">Great Sword</option>
+            <option value="Staff" data-color="bg-indigo-500">Staff</option>
+            <option value="Dagger" data-color="bg-pink-500">Dagger</option>
+            <option value="Bow" data-color="bg-teal-500">Bow</option>
+            <option value="Crossbow" data-color="bg-orange-500">Crossbow</option>
+          </select>
+          <input type="number" id="new-member-cp" placeholder="Initial CP" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
+          <input type="text" id="new-member-avatar" placeholder="Avatar URL" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
+          <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg">Add Member</button>
+        </form>
+      </div>
+
+      <!-- Update/Delete CP & Member -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-bold mb-4">Update / Delete Member</h3>
+
+        <!-- Update CP -->
+        <form id="update-cp-form" class="space-y-4">
+          <select id="update-member-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
+            <option value="">Select Member</option>
+          </select>
+          <input type="number" id="update-cp-value" placeholder="New CP" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
+          <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg">Update CP</button>
+        </form>
+
+        <!-- Delete Member -->
+        <button id="delete-member-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg mt-4">Delete Selected Member</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Leaderboards Containers -->
+<div class="hidden">
+  <div id="total-cp-leaderboard"></div>
+  <div id="weekly-growth-leaderboard"></div>
+</div>
+
+<script>
+  // --- Firebase already initialized ---
+  const membersRef = db.collection('members');
+
+  // --- Populate dropdowns ---
+  function populateMemberDropdowns() {
+    const updateSelect = document.getElementById('update-member-select');
+    updateSelect.innerHTML = '<option value="">Select Member</option>';
+    membersRef.get().then(snapshot => {
+      snapshot.docs.forEach(doc => {
+        const m = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = m.name;
+        updateSelect.appendChild(option);
+      });
+    });
+  }
+  populateMemberDropdowns();
+
+  // --- Add Member ---
+  document.getElementById('add-member-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const name = document.getElementById('new-member-name').value.trim();
+    const cls = document.getElementById('new-member-class').value;
+    const cp = parseInt(document.getElementById('new-member-cp').value);
+    const avatar = document.getElementById('new-member-avatar').value.trim();
+    const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
+    if(!name || !cls || isNaN(cp) || !avatar) return alert("Fill all fields");
+
+    membersRef.add({
+      name: name,
+      class: cls,
+      classColor: color,
+      cp: cp,
+      growth: 0,
+      weeklyCP: [{ week: 'Week 1', cp: cp, growth: 0, rank: '-' }],
+      avatar: avatar
+    }).then(() => {
+      alert("Member added!");
+      document.getElementById('add-member-form').reset();
+      populateMemberDropdowns();
+      updateLeaderboards();
+    });
+  });
+
+  // --- Update CP ---
+  document.getElementById('update-cp-form').addEventListener('submit', e => {
+    e.preventDefault();
+    const memberId = document.getElementById('update-member-select').value;
+    const newCP = parseInt(document.getElementById('update-cp-value').value);
+    if(!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
+
+    const memberDoc = membersRef.doc(memberId);
+    memberDoc.get().then(doc => {
+      if(!doc.exists) return alert("Member not found");
+      const data = doc.data();
+      const oldCP = data.cp || 0;
+      const growth = newCP - oldCP;
+      const weekNum = (data.weeklyCP?.length || 0) + 1;
+      const weeklyCP = [...(data.weeklyCP || []), { week: 'Week ' + weekNum, cp: newCP, growth: growth, rank: '-' }];
+
+      memberDoc.update({ cp: newCP, growth: growth, weeklyCP: weeklyCP })
+        .then(() => {
+          alert(`CP updated! Growth: ${growth}`);
+          document.getElementById('update-cp-form').reset();
+          populateMemberDropdowns();
+          updateLeaderboards();
+        });
+    });
+  });
+
+  // --- Delete Member ---
+  document.getElementById('delete-member-btn').addEventListener('click', () => {
+    const memberId = document.getElementById('update-member-select').value;
+    if(!memberId) return alert("Select a member to delete");
+    if(!confirm("Are you sure you want to delete this member?")) return;
+
+    membersRef.doc(memberId).delete().then(() => {
+      alert("Member deleted!");
+      populateMemberDropdowns();
+      updateLeaderboards();
+    });
+  });
+
+  // --- Leaderboards ---
+  const totalCPContainer = document.getElementById('total-cp-leaderboard');
+  const weeklyGrowthContainer = document.getElementById('weekly-growth-leaderboard');
+
+  function updateLeaderboards() {
+    membersRef.get().then(snapshot => {
+      const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+      // Total CP Ranking
+      const totalCPRanked = [...members].sort((a,b)=>b.cp-a.cp);
+      totalCPRanked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
+
+      // Weekly Growth Ranking
+      const growthRanked = [...members].sort((a,b)=>(b.growth||0)-(a.growth||0));
+
+      // Optional: Render HTML if needed
+      totalCPContainer.innerHTML = '';
+      weeklyGrowthContainer.innerHTML = '';
+    });
+  }
+
+  // Initial load
+  updateLeaderboards();
+  setInterval(updateLeaderboards, 10000); // auto-refresh
+</script>
+
     </div>
   </div>
 </section>
