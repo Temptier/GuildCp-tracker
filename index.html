@@ -144,31 +144,8 @@
                 <button class="class-badge bg-orange-500 hover:bg-orange-600 text-white">Crossbow</button>
             </div>
 
-            <!-- Members Grid -->
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Sample Member Card -->
-                <div class="bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center space-x-3">
-                            <img src="http://static.photos/fantasy/200x200/1" alt="Member Avatar" class="w-12 h-12 rounded-full">
-                            <div>
-                                <h4 class="font-bold">Aragorn</h4>
-                                <span class="class-badge bg-blue-500 text-white">Sword & Shield</span>
-                            </div>
-                        </div>
-                        <div class="achievement-badge bg-yellow-500 text-gray-900 rounded-full p-2">
-                            <i data-feather="star"></i>
-                        </div>
-                    </div>
-                    <div class="mb-4">
-                        <div class="flex justify-between text-sm mb-1">
-                            <span>Current CP: 15,234</span>
-                            <span class="text-green-400">+1,245</span>
-                        </div>
-                        <div class="w-full bg-gray-700 rounded-full h-2">
-                            <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width: 75%"></div>
-                        </div>
-                    </div>
+<!-- Members Grid -->
+<div id="members-list" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                     <button class="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition-colors">
                         View Progress
                     </button>
@@ -363,6 +340,6 @@
             nav.classList.toggle('p-4');
             nav.classList.toggle('space-y-4');
         });
-    </script>
+    <script src="static/js/main.js"></script>
 </body>
 </html>
