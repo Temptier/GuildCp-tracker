@@ -3,168 +3,169 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aragorn - GuildPower Tracker Pro</title>
+  <title>Member - GuildPower Tracker Pro</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  
+  <!-- Tailwind, Chart.js, Feather Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
     .medieval-font { font-family: 'MedievalSharp', cursive; }
-    .class-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
+    .class-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
   </style>
 </head>
-
 <body class="bg-gray-900 text-white font-['Inter']">
 
-  <!-- Navigation -->
-  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <a href="index.html" class="flex items-center space-x-2">
-        <i data-feather="arrow-left" class="text-yellow-400"></i>
-        <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
-      </a>
+<!-- Navigation -->
+<nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+  <div class="flex items-center space-x-2">
+    <a href="index.html" class="flex items-center space-x-2">
+      <i data-feather="arrow-left" class="text-yellow-400"></i>
+      <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
+    </a>
+  </div>
+</nav>
+
+<!-- Member Detail Section -->
+<section class="py-12">
+  <div class="container mx-auto px-6">
+    <div class="max-w-4xl mx-auto">
+      <!-- Member Header -->
+      <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8" id="member-header">
+        Loading member data...
+      </div>
+
+      <!-- Progress Chart -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+        <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
+        <div class="h-80">
+          <canvas id="memberProgressChart"></canvas>
+        </div>
+      </div>
+
+      <!-- Weekly Data Table -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full" id="weekly-table">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="text-left py-3">Week</th>
+                <th class="text-left py-3">Combat Power</th>
+                <th class="text-left py-3">Growth</th>
+                <th class="text-left py-3">Rank</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
     </div>
-  </nav>
+  </div>
+</section>
 
-  <!-- Member Detail Section -->
-  <section class="py-12">
-    <div class="container mx-auto px-6">
-      <div class="max-w-4xl mx-auto">
+<script>
+  // Initialize Firebase
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
+    authDomain: "guildcombatpower.firebaseapp.com",
+    projectId: "guildcombatpower",
+    storageBucket: "guildcombatpower.firebasestorage.app",
+    messagingSenderId: "862355543279",
+    appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
 
-        <!-- Member Header -->
-        <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
-          <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-            <img src="http://static.photos/fantasy/200x200/1" alt="Aragorn" class="w-32 h-32 rounded-full border-4 border-yellow-400">
-            <div class="flex-1 text-center md:text-left">
-              <h2 class="text-4xl font-bold mb-2 medieval-font">Aragorn</h2>
-              <span class="class-badge bg-blue-500 text-white text-lg">Sword & Shield</span>
+  feather.replace();
 
-              <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="text-center">
-                  <p class="text-gray-400">Current CP</p>
-                  <p class="text-2xl font-bold">15,234</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Weekly Growth</p>
-                  <p class="text-2xl font-bold text-green-400">+1,245</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Rank</p>
-                  <p class="text-2xl font-bold">#3</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Member Since</p>
-                  <p class="text-xl font-bold">Week 12</p>
-                </div>
-              </div>
+  // Get member ID from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const memberId = urlParams.get('id');
+
+  const headerDiv = document.getElementById('member-header');
+  const tableBody = document.querySelector('#weekly-table tbody');
+
+  // Fetch member data
+  db.collection("members").doc(memberId).get().then(doc => {
+    if (!doc.exists) {
+      headerDiv.innerHTML = '<p class="text-red-400">Member not found!</p>';
+      return;
+    }
+
+    const m = doc.data();
+
+    // Update header
+    headerDiv.innerHTML = `
+      <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+        <img src="${m.avatar}" alt="${m.name}" class="w-32 h-32 rounded-full border-4 border-yellow-400">
+        <div class="flex-1 text-center md:text-left">
+          <h2 class="text-4xl font-bold mb-2 medieval-font">${m.name}</h2>
+          <span class="class-badge ${m.classColor} text-white text-lg">${m.class}</span>
+          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="text-center">
+              <p class="text-gray-400">Current CP</p>
+              <p class="text-2xl font-bold">${m.cp.toLocaleString()}</p>
+            </div>
+            <div class="text-center">
+              <p class="text-gray-400">Weekly Growth</p>
+              <p class="text-2xl font-bold text-green-400">+${m.growth.toLocaleString()}</p>
+            </div>
+            <div class="text-center">
+              <p class="text-gray-400">Rank</p>
+              <p class="text-2xl font-bold">#${m.rank}</p>
+            </div>
+            <div class="text-center">
+              <p class="text-gray-400">Member Since</p>
+              <p class="text-xl font-bold">Week ${m.joinWeek}</p>
             </div>
           </div>
         </div>
-
-        <!-- Progress Chart -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
-          <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
-          <div class="h-80">
-            <canvas id="memberProgressChart"></canvas>
-          </div>
-        </div>
-
-        <!-- Weekly Data Table -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-700">
-                  <th class="text-left py-3">Week</th>
-                  <th class="text-left py-3">Combat Power</th>
-                  <th class="text-left py-3">Growth</th>
-                  <th class="text-left py-3">Rank</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr class="border-b border-gray-700">
-                  <td class="py-3">Week 16</td>
-                  <td class="py-3 font-bold">15,234</td>
-                  <td class="py-3 text-green-400">+1,245</td>
-                  <td class="py-3">#3</td>
-                </tr>
-                <tr class="border-b border-gray-700">
-                  <td class="py-3">Week 15</td>
-                  <td class="py-3">13,989</td>
-                  <td class="py-3 text-green-400">+892</td>
-                  <td class="py-3">#4</td>
-                </tr>
-                <!-- More weeks can be added here -->
-              </tbody>
-            </table>
-          </div>
-        </div>
-
       </div>
-    </div>
-  </section>
+    `;
 
-  <script>
-    feather.replace();
+    // Fill weekly CP history table
+    m.history.forEach(week => {
+      const row = document.createElement('tr');
+      row.className = 'border-b border-gray-700';
+      row.innerHTML = `
+        <td class="py-3">${week.week}</td>
+        <td class="py-3 font-bold">${week.cp.toLocaleString()}</td>
+        <td class="py-3 text-green-400">+${week.growth.toLocaleString()}</td>
+        <td class="py-3">#${week.rank}</td>
+      `;
+      tableBody.appendChild(row);
+    });
 
     // Member Progress Chart
-   
-
-const urlParams = new URLSearchParams(window.location.search);
-const memberId = urlParams.get('id');
-
-fetch('static/data/members.json')
-  .then(res => res.json())
-  .then(members => {
-    const member = members.find(m => m.id === memberId);
-    if (!member) return;
-
-    document.title = `${member.name} - GuildPower Tracker Pro`;
-    document.querySelector('h2').textContent = member.name;
-    document.querySelector('img').src = member.avatar;
-    document.querySelector('.class-badge').textContent = member.class;
-    document.querySelector('.class-badge').classList.add(member.classColor);
-
-    // Update stats
-    document.querySelectorAll('.text-2xl.font-bold')[0].textContent = member.cp.toLocaleString();
-    document.querySelectorAll('.text-2xl.font-bold.text-green-400')[0].textContent = `+${member.growth.toLocaleString()}`;
-    document.querySelectorAll('.text-2xl.font-bold')[1].textContent = `#${member.rank}`;
-
-    // Chart
     const ctx = document.getElementById('memberProgressChart').getContext('2d');
     new Chart(ctx, {
       type: 'line',
       data: {
-        labels: member.history.map((_, i) => `Week ${i + 1}`),
+        labels: m.history.map(w => w.week),
         datasets: [{
           label: 'Combat Power',
-          data: member.history,
+          data: m.history.map(w => w.cp),
           borderColor: '#3b82f6',
           backgroundColor: 'rgba(59, 130, 246, 0.1)',
           tension: 0.4,
           fill: true
         }]
       },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: {
-          y: { grid: { color: 'rgba(255,255,255,0.1)' } },
-          x: { grid: { color: 'rgba(255,255,255,0.1)' } }
-        }
-      }
+      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{color:'rgba(255,255,255,0.1)'}}} }
     });
+
+  }).catch(err => {
+    headerDiv.innerHTML = `<p class="text-red-400">Error loading member: ${err}</p>`;
   });
-  </script>
+</script>
 
 </body>
 </html>
