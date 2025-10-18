@@ -3,18 +3,13 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Member - GuildPower Tracker Pro</title>
+  <title>Member Detail - GuildPower Tracker Pro</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
-  
-  <!-- Tailwind, Chart.js, Feather Icons -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
-
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
     .medieval-font { font-family: 'MedievalSharp', cursive; }
@@ -37,9 +32,10 @@
 <section class="py-12">
   <div class="container mx-auto px-6">
     <div class="max-w-4xl mx-auto">
+
       <!-- Member Header -->
       <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8" id="member-header">
-        Loading member data...
+        <!-- Filled dynamically -->
       </div>
 
       <!-- Progress Chart -->
@@ -51,28 +47,15 @@
       </div>
 
       <!-- Weekly Data Table -->
-      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full" id="weekly-table">
-            <thead>
-              <tr class="border-b border-gray-700">
-                <th class="text-left py-3">Week</th>
-                <th class="text-left py-3">Combat Power</th>
-                <th class="text-left py-3">Growth</th>
-                <th class="text-left py-3">Rank</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg" id="member-history">
+        <!-- Filled dynamically -->
       </div>
     </div>
   </div>
 </section>
 
 <script>
-  // Initialize Firebase
+  // --- Initialize Firebase ---
   const firebaseConfig = {
     apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
     authDomain: "guildcombatpower.firebaseapp.com",
@@ -86,86 +69,104 @@
 
   feather.replace();
 
-  // Get member ID from URL
+  // --- Get member ID from URL ---
   const urlParams = new URLSearchParams(window.location.search);
   const memberId = urlParams.get('id');
 
-  const headerDiv = document.getElementById('member-header');
-  const tableBody = document.querySelector('#weekly-table tbody');
+  if (!memberId) {
+    alert("No member selected!");
+  } else {
+    db.collection("members").doc(memberId).get().then(doc => {
+      if (!doc.exists) {
+        alert("Member not found!");
+        return;
+      }
+      const m = doc.data();
 
-  // Fetch member data
-  db.collection("members").doc(memberId).get().then(doc => {
-    if (!doc.exists) {
-      headerDiv.innerHTML = '<p class="text-red-400">Member not found!</p>';
-      return;
-    }
-
-    const m = doc.data();
-
-    // Update header
-    headerDiv.innerHTML = `
-      <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-        <img src="${m.avatar}" alt="${m.name}" class="w-32 h-32 rounded-full border-4 border-yellow-400">
-        <div class="flex-1 text-center md:text-left">
-          <h2 class="text-4xl font-bold mb-2 medieval-font">${m.name}</h2>
-          <span class="class-badge ${m.classColor} text-white text-lg">${m.class}</span>
-          <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center">
-              <p class="text-gray-400">Current CP</p>
-              <p class="text-2xl font-bold">${m.cp.toLocaleString()}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-gray-400">Weekly Growth</p>
-              <p class="text-2xl font-bold text-green-400">+${m.growth.toLocaleString()}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-gray-400">Rank</p>
-              <p class="text-2xl font-bold">#${m.rank}</p>
-            </div>
-            <div class="text-center">
-              <p class="text-gray-400">Member Since</p>
-              <p class="text-xl font-bold">Week ${m.joinWeek}</p>
+      // --- Member Header ---
+      document.getElementById('member-header').innerHTML = `
+        <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+          <img src="${m.avatar}" alt="${m.name}" class="w-32 h-32 rounded-full border-4 border-yellow-400">
+          <div class="flex-1 text-center md:text-left">
+            <h2 class="text-4xl font-bold mb-2 medieval-font">${m.name}</h2>
+            <span class="class-badge ${m.classColor} text-white text-lg">${m.class}</span>
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div class="text-center">
+                <p class="text-gray-400">Current CP</p>
+                <p class="text-2xl font-bold">${m.cp.toLocaleString()}</p>
+              </div>
+              <div class="text-center">
+                <p class="text-gray-400">Weekly Growth</p>
+                <p class="text-2xl font-bold text-green-400">+${m.growth.toLocaleString()}</p>
+              </div>
+              <div class="text-center">
+                <p class="text-gray-400">Rank</p>
+                <p class="text-2xl font-bold">#${m.rank || '-'}</p>
+              </div>
+              <div class="text-center">
+                <p class="text-gray-400">Member Since</p>
+                <p class="text-xl font-bold">${m.startWeek || '-'}</p>
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    `;
-
-    // Fill weekly CP history table
-    m.history.forEach(week => {
-      const row = document.createElement('tr');
-      row.className = 'border-b border-gray-700';
-      row.innerHTML = `
-        <td class="py-3">${week.week}</td>
-        <td class="py-3 font-bold">${week.cp.toLocaleString()}</td>
-        <td class="py-3 text-green-400">+${week.growth.toLocaleString()}</td>
-        <td class="py-3">#${week.rank}</td>
       `;
-      tableBody.appendChild(row);
-    });
 
-    // Member Progress Chart
-    const ctx = document.getElementById('memberProgressChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: m.history.map(w => w.week),
-        datasets: [{
-          label: 'Combat Power',
-          data: m.history.map(w => w.cp),
-          borderColor: '#3b82f6',
-          backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          tension: 0.4,
-          fill: true
-        }]
-      },
-      options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{color:'rgba(255,255,255,0.1)'}}} }
-    });
+      // --- Member Progress Chart ---
+      const ctx = document.getElementById('memberProgressChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: m.weeklyCP?.map(w => w.week) || [],
+          datasets: [{
+            label: 'Combat Power',
+            data: m.weeklyCP?.map(w => w.cp) || [],
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+            x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+          }
+        }
+      });
 
-  }).catch(err => {
-    headerDiv.innerHTML = `<p class="text-red-400">Error loading member: ${err}</p>`;
-  });
+      // --- Weekly Data Table ---
+      const tableContainer = document.getElementById('member-history');
+      let tableHTML = `
+        <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="text-left py-3">Week</th>
+                <th class="text-left py-3">Combat Power</th>
+                <th class="text-left py-3">Growth</th>
+                <th class="text-left py-3">Rank</th>
+              </tr>
+            </thead>
+            <tbody>
+      `;
+      m.weeklyCP?.slice().reverse().forEach(w => {
+        tableHTML += `
+          <tr class="border-b border-gray-700">
+            <td class="py-3">${w.week}</td>
+            <td class="py-3 font-bold">${w.cp.toLocaleString()}</td>
+            <td class="py-3 text-green-400">+${w.growth.toLocaleString()}</td>
+            <td class="py-3">${w.rank}</td>
+          </tr>
+        `;
+      });
+      tableHTML += `</tbody></table></div>`;
+      tableContainer.innerHTML = tableHTML;
+
+    }).catch(err => alert('Error fetching member: ' + err));
+  }
 </script>
-
-</body>
-</html>
