@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Leaderboards - GuildPower Tracker Pro</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
+    .medieval-font { font-family: 'MedievalSharp', cursive; }
+    .class-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body class="bg-gray-900 text-white font-['Inter']">
+
+  <!-- Navigation -->
+  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <a href="index.html" class="flex items-center space-x-2">
+        <i data-feather="arrow-left" class="text-yellow-400"></i>
+        <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Leaderboards Section -->
+  <section class="py-16">
+    <div class="container mx-auto px-6">
+      <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Leaderboards</h2>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <!-- Total CP Leaderboard -->
+        <div class="bg-gray-700 rounded-xl p-6 shadow-lg">
+          <h3 class="text-xl font-bold mb-6 flex items-center">
+            <i data-feather="crown" class="mr-2 text-yellow-400"></i>
+            Total CP Ranking
+          </h3>
+          <div id="total-cp-leaderboard" class="space-y-4"></div>
+        </div>
+
+        <!-- Weekly Growth Leaderboard -->
+        <div class="bg-gray-700 rounded-xl p-6 shadow-lg">
+          <h3 class="text-xl font-bold mb-6 flex items-center">
+            <i data-feather="trending-up" class="mr-2 text-green-400"></i>
+            Weekly Growth Ranking
+          </h3>
+          <div id="weekly-growth-leaderboard" class="space-y-4"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // Firebase config
+    const firebaseConfig = {
+      apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
+      authDomain: "guildcombatpower.firebaseapp.com",
+      projectId: "guildcombatpower",
+      storageBucket: "guildcombatpower.firebasestorage.app",
+      messagingSenderId: "862355543279",
+      appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    function renderLeaderboards() {
+      db.collection('members').get().then(snapshot => {
+        const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+
+        // Sort members
+        const totalCP = [...members].sort((a,b)=>b.cp - a.cp);
+        const growth = [...members].sort((a,b)=> (b.growth||0) - (a.growth||0));
+
+        // Total CP
+        const totalCPContainer = document.getElementById('total-cp-leaderboard');
+        totalCPContainer.innerHTML = totalCP.map((m,i)=>`
+          <div class="flex items-center justify-between p-4 bg-gray-600 rounded-lg">
+            <div class="flex items-center space-x-3">
+              <span class="text-yellow-400 font-bold text-lg">${i+1}</span>
+              <img src="${m.avatar}" alt="${m.name}" class="w-10 h-10 rounded-full">
+              <div>
+                <p class="font-bold">${m.name}</p>
+                <span class="class-badge ${m.classColor} text-white">${m.class}</span>
+              </div>
+            </div>
+            <span class="text-xl font-bold">${m.cp.toLocaleString()}</span>
+          </div>
+        `).join('');
+
+        // Weekly Growth
+        const weeklyGrowthContainer = document.getElementById('weekly-growth-leaderboard');
+        weeklyGrowthContainer.innerHTML = growth.map((m,i)=>`
+          <div class="flex items-center justify-between p-4 bg-gray-600 rounded-lg">
+            <div class="flex items-center space-x-3">
+              <span class="text-yellow-400 font-bold text-lg">${i+1}</span>
+              <img src="${m.avatar}" alt="${m.name}" class="w-10 h-10 rounded-full">
+              <div>
+                <p class="font-bold">${m.name}</p>
+                <span class="class-badge ${m.classColor} text-white">${m.class}</span>
+              </div>
+            </div>
+            <span class="text-xl font-bold text-green-400">${m.growth>=0?'+':''}${(m.growth||0).toLocaleString()}</span>
+          </div>
+        `).join('');
+
+        feather.replace();
+      });
+    }
+
+    renderLeaderboards();
+    setInterval(renderLeaderboards, 10000); // auto-refresh
+  </script>
+
+</body>
+</html>
