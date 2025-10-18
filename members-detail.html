@@ -1,4 +1,153 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Aragorn - GuildPower Tracker Pro</title> <link rel="icon" type="image/x-icon" href="/static/favicon.ico"> <script src="https://cdn.tailwindcss.com"></script> <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> <script src="https://unpkg.com/feather-icons"></script> <style> @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap'); .medieval-font { font-family: 'MedievalSharp', cursive; } .class-badge { padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; } </style> </head> <body class="bg-gray-900 text-white font-['Inter']"> <!-- Navigation --> <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center"> <div class="flex items-center space-x-2"> <a href="index.html" class="flex items-center space-x-2"> <i data-feather="arrow-left" class="text-yellow-400"></i> <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1> </a> </div> </nav> <!-- Member Detail Section --> <section class="py-12"> <div class="container mx-auto px-6"> <div class="max-w-4xl mx-auto"> <!-- Member Header --> <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8"> <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8"> <img src="http://static.photos/fantasy/200x200/1" alt="Aragorn" class="w-32 h-32 rounded-full border-4 border-yellow-400"> <div class="flex-1 text-center md:text-left"> <h2 class="text-4xl font-bold mb-2 medieval-font">Aragorn</h2> <span class="class-badge bg-blue-500 text-white text-lg">Sword & Shield</span> <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4"> <div class="text-center"> <p class="text-gray-400">Current CP</p> <p class="text-2xl font-bold">15,234</p> </div> <div class="text-center"> <p class="text-gray-400">Weekly Growth</p> <p class="text-2xl font-bold text-green-400">+1,245</p> </div> <div class="text-center"> <p class="text-gray-400">Rank</p> <p class="text-2xl font-bold">#3</p> </div> <div class="text-center"> <p class="text-gray-400">Member Since</p> <p class="text-xl font-bold">Week 12</p> </div> </div> </div> </div> </div> <!-- Progress Chart --> <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8"> <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3> <div class="h-80"> <canvas id="memberProgressChart"></canvas> </div> </div> <!-- Weekly Data Table --> <div class="bg-gray-800 rounded-xl p-6 shadow-lg"> <h3 class="text-xl font-bold mb-6">Weekly CP History</h3> <div class="overflow-x-auto"> <table class="w-full"> <thead> <tr class="border-b border-gray-700"> <th class="text-left py-3">Week</th> <th class="text-left py-3">Combat Power</h3> <th class="text-left py-3">Growth</th> <th class="text-left py-3">Rank</th> </tr> </thead> <tbody> <tr class="border-b border-gray-700"> <td class="py-3">Week 16</td> <td class="py-3 font-bold">15,234</td> <td class="py-3 text-green-400">+1,245</td> <td class="py-3">#3</td> </tr> <tr class="border-b border-gray-700"> <td class="py-3">Week 15</td> <td class="py-3">13,989</td> <td class="py-3 text-green-400">+892</td> <td class="py-3">#4</td> </tr> <!-- More weeks would go here --> </tbody> </table> </div> </div> </div> </div> </section> <script> feather.replace(); // Member Progress Chart const memberCtx = document.getElementById('memberProgressChart').getContext('2d'); new Chart(memberCtx, { type: 'line', data: { labels: ['Week 12', 'Week 13', 'Week 14', 'Week 15', 'Week 16'], datasets: [{ label: 'Combat Power', data: [9800, 10500, 11200, 13989, 15234], borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', tension: 0.4, fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: false, grid: { color: 'rgba(255, 255, 255, 0.1)' } }, x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } } } } });
- </script>
- </body>
- </html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aragorn - GuildPower Tracker Pro</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
+    .medieval-font { font-family: 'MedievalSharp', cursive; }
+    .class-badge {
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-900 text-white font-['Inter']">
+
+  <!-- Navigation -->
+  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
+    <div class="flex items-center space-x-2">
+      <a href="index.html" class="flex items-center space-x-2">
+        <i data-feather="arrow-left" class="text-yellow-400"></i>
+        <h1 class="text-xl medieval-font">GuildPower Tracker Pro</h1>
+      </a>
+    </div>
+  </nav>
+
+  <!-- Member Detail Section -->
+  <section class="py-12">
+    <div class="container mx-auto px-6">
+      <div class="max-w-4xl mx-auto">
+
+        <!-- Member Header -->
+        <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
+          <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+            <img src="http://static.photos/fantasy/200x200/1" alt="Aragorn" class="w-32 h-32 rounded-full border-4 border-yellow-400">
+            <div class="flex-1 text-center md:text-left">
+              <h2 class="text-4xl font-bold mb-2 medieval-font">Aragorn</h2>
+              <span class="class-badge bg-blue-500 text-white text-lg">Sword & Shield</span>
+
+              <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center">
+                  <p class="text-gray-400">Current CP</p>
+                  <p class="text-2xl font-bold">15,234</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Weekly Growth</p>
+                  <p class="text-2xl font-bold text-green-400">+1,245</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Rank</p>
+                  <p class="text-2xl font-bold">#3</p>
+                </div>
+                <div class="text-center">
+                  <p class="text-gray-400">Member Since</p>
+                  <p class="text-xl font-bold">Week 12</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progress Chart -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
+          <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
+          <div class="h-80">
+            <canvas id="memberProgressChart"></canvas>
+          </div>
+        </div>
+
+        <!-- Weekly Data Table -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+          <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b border-gray-700">
+                  <th class="text-left py-3">Week</th>
+                  <th class="text-left py-3">Combat Power</th>
+                  <th class="text-left py-3">Growth</th>
+                  <th class="text-left py-3">Rank</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="border-b border-gray-700">
+                  <td class="py-3">Week 16</td>
+                  <td class="py-3 font-bold">15,234</td>
+                  <td class="py-3 text-green-400">+1,245</td>
+                  <td class="py-3">#3</td>
+                </tr>
+                <tr class="border-b border-gray-700">
+                  <td class="py-3">Week 15</td>
+                  <td class="py-3">13,989</td>
+                  <td class="py-3 text-green-400">+892</td>
+                  <td class="py-3">#4</td>
+                </tr>
+                <!-- More weeks can be added here -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    feather.replace();
+
+    // Member Progress Chart
+    const memberCtx = document.getElementById('memberProgressChart').getContext('2d');
+    new Chart(memberCtx, {
+      type: 'line',
+      data: {
+        labels: ['Week 12', 'Week 13', 'Week 14', 'Week 15', 'Week 16'],
+        datasets: [{
+          label: 'Combat Power',
+          data: [9800, 10500, 11200, 13989, 15234],
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false }
+        },
+        scales: {
+          y: {
+            beginAtZero: false,
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          },
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.1)' }
+          }
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
