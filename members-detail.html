@@ -40,7 +40,7 @@
   <section class="py-12">
     <div class="container mx-auto px-6">
       <div class="max-w-4xl mx-auto">
-        
+
         <!-- Member Header -->
         <div class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
           <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
@@ -92,10 +92,28 @@
                 </tr>
               </thead>
               <tbody>
-                <!-- Rows will be dynamically populated -->
+                <!-- Rows dynamically populated -->
               </tbody>
             </table>
           </div>
+        </div>
+
+<!-- Update CP Section -->
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mt-6">
+          <h3 class="text-xl font-bold mb-4">Update Combat Power</h3>
+          <form id="updateCpForm" class="flex flex-col sm:flex-row gap-4">
+            <input type="number" id="newCp" placeholder="New CP" class="w-full sm:w-auto flex-1 bg-gray-700 border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:border-yellow-400">
+            <button type="submit" class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-2 px-6 rounded-lg transition-colors">
+              Update CP
+            </button>
+          </form>
+        </div>
+
+        <!-- Delete Member -->
+        <div class="mt-4 text-right">
+          <button id="deleteMemberBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">
+            Delete Member
+          </button>
         </div>
 
       </div>
@@ -123,11 +141,12 @@
     }
     const memberId = getQueryParam('id');
 
-    // Fetch member data and populate page
+    let m; // store member data globally
+
     if(memberId){
       db.collection('members').doc(memberId).get().then(doc => {
         if(!doc.exists) return alert("Member not found");
-        const m = doc.data();
+        m = doc.data();
 
         // Header
         document.querySelector('h2').textContent = m.name;
@@ -185,6 +204,40 @@
     } else {
       alert("No member ID provided");
     }
+
+    // Update CP
+    document.getElementById('updateCpForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const newCpValue = parseInt(document.getElementById('newCp').value);
+      if (!newCpValue || newCpValue < 0) return alert("Enter a valid CP");
+
+      const currentCp = m.cp || 0;
+      const growth = newCpValue - currentCp;
+
+      db.collection('members').doc(memberId).update({
+        cp: newCpValue,
+        growth: growth,
+        weeklyCP: firebase.firestore.FieldValue.arrayUnion({
+          week: `Week ${m.weeklyCP.length + 1}`,
+          cp: newCpValue,
+          growth: growth,
+          rank: m.rank
+        })
+      }).then(() => {
+        alert("CP updated successfully");
+        location.reload();
+      }).catch(err => alert("Error updating CP: " + err.message));
+    });
+
+    // Delete member
+    document.getElementById('deleteMemberBtn').addEventListener('click', () => {
+      if(confirm("Are you sure you want to delete this member? This cannot be undone.")){
+        db.collection('members').doc(memberId).delete().then(() => {
+          alert("Member deleted");
+          window.location.href = 'index.html';
+        }).catch(err => alert("Error deleting member: " + err.message));
+      }
+    });
   </script>
 
 </body>
