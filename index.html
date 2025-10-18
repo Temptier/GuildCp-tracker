@@ -218,32 +218,51 @@
     }
     populateMemberDropdowns();
 
-    // Add Member
-    document.getElementById('add-member-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const name = document.getElementById('new-member-name').value.trim();
-      const cls = document.getElementById('new-member-class').value;
-      const cp = parseInt(document.getElementById('new-member-cp').value);
-      let avatar = document.getElementById('new-member-avatar').value.trim();
-      if(!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
-      const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
-      if(!name || !cls || isNaN(cp)) return alert("Fill all fields");
+    // Add Member (with duplicate prevention & case-insensitive name)
+document.getElementById('add-member-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const name = document.getElementById('new-member-name').value.trim();
+  const cls = document.getElementById('new-member-class').value;
+  const cp = parseInt(document.getElementById('new-member-cp').value);
+  let avatar = document.getElementById('new-member-avatar').value.trim();
+  if (!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
+  const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
+  if (!name || !cls || isNaN(cp)) return alert("Please fill in all fields.");
 
-      membersRef.add({
-        name:name,
-        class:cls,
-        classColor:color,
-        cp:cp,
-        growth:0,
-        weeklyCP:[{week:'Week 1', cp:cp, growth:0, rank:'-'}],
-        avatar:avatar
-      }).then(() => {
-        alert("Member added!");
-        document.getElementById('add-member-form').reset();
-        populateMemberDropdowns();
-        updateLeaderboards();
-      });
+  try {
+    // 🔍 Check for duplicate (case-insensitive)
+    const snapshot = await membersRef.get();
+    const exists = snapshot.docs.some(doc => {
+      const data = doc.data();
+      return data.name.toLowerCase() === name.toLowerCase() && data.class === cls;
     });
+
+    if (exists) {
+      alert("⚠️ A member with this name and class already exists!");
+      return;
+    }
+
+    // ✅ Add new member
+    await membersRef.add({
+      name: name,
+      class: cls,
+      classColor: color,
+      cp: cp,
+      growth: 0,
+      weeklyCP: [{ week: 'Week 1', cp: cp, growth: 0, rank: '-' }],
+      avatar: avatar
+    });
+
+    alert("✅ Member added successfully!");
+    document.getElementById('add-member-form').reset();
+    populateMemberDropdowns();
+    updateLeaderboards();
+
+  } catch (error) {
+    console.error("Error adding member:", error);
+    alert("❌ Failed to add member. Check console for details.");
+  }
+});
 
     // Update CP
     document.getElementById('update-cp-form').addEventListener('submit', e => {
