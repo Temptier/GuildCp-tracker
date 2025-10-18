@@ -23,6 +23,7 @@
   </style>
 </head>
 <body class="bg-gray-900 text-white font-['Inter']">
+
   <!-- Navigation -->
   <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center sticky top-0 z-50 shadow-lg">
     <div class="flex items-center space-x-2">
@@ -48,11 +49,9 @@
         <h2 class="text-5xl md:text-6xl font-bold mb-6 medieval-font">CELESTIALS</h2>
         <p class="text-xl mb-8 text-gray-200">Track your guild's Combat Power progression and dominate the rankings!</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <button class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 px-8 rounded-lg transition-all transform hover:scale-105">
-           
           <a href="leaderboards.html" 
-   class="frosted-glass border border-white/30 hover:bg-white/10 text-white font-bold py-3 px-8 rounded-lg transition-all inline-block">
-          View Leaderboard
+             class="frosted-glass border border-white/30 hover:bg-white/10 text-white font-bold py-3 px-8 rounded-lg transition-all inline-block">
+             View Leaderboard
           </a>
         </div>
       </div>
@@ -125,7 +124,7 @@
     </div>
   </section>
 
-<!-- Admin Section -->
+  <!-- Admin Section -->
   <section id="admin" class="py-16 bg-gray-900">
     <div class="container mx-auto px-6">
       <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Admin Dashboard</h2>
@@ -159,7 +158,7 @@
         <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
           <h3 class="text-xl font-bold mb-4">Update / Delete Member</h3>
 
-          <!-- Update CP -->
+<!-- Update CP -->
           <form id="update-cp-form" class="space-y-4">
             <select id="update-member-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
               <option value="">Select Member</option>
@@ -188,201 +187,201 @@
     };
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-  </script>
+    const membersRef = db.collection('members');
 
-<script>
-  const membersRef = db.collection('members');
+    // Default Avatars
+    const defaultAvatars = {
+      'Bow':'https://i.imgur.com/w8VJlOnm.jpg',
+      'Crossbow':'https://i.imgur.com/Omci8iCm.jpg',
+      'Staff':'https://i.imgur.com/Bo3ZY5vm.jpg',
+      'Battle Shield':'https://i.imgur.com/YCpmOwTm.jpg',
+      'Great Sword':'https://i.imgur.com/IHsuu5am.jpg',
+      'Battle Staff':'https://i.imgur.com/xI1IKPsm.jpg',
+      'Sword & Shield':'https://i.imgur.com/I4Rku2cm.jpg',
+      'Dagger':'https://i.imgur.com/fzTxuszm.jpg',
+      'Bare Hand':'https://i.imgur.com/Bo3ZY5vm.jpg'
+    };
 
-  // Populate member dropdowns
-  function populateMemberDropdowns() {
-    const updateSelect = document.getElementById('update-member-select');
-    updateSelect.innerHTML = '<option value="">Select Member</option>';
-    membersRef.get().then(snapshot => {
-      snapshot.docs.forEach(doc => {
-        const m = doc.data();
-        const option = document.createElement('option');
-        option.value = doc.id;
-        option.textContent = m.name;
-        updateSelect.appendChild(option);
+    // Populate Member Dropdowns
+    function populateMemberDropdowns() {
+      const updateSelect = document.getElementById('update-member-select');
+      updateSelect.innerHTML = '<option value="">Select Member</option>';
+      membersRef.get().then(snapshot => {
+        snapshot.docs.forEach(doc => {
+          const m = doc.data();
+          const option = document.createElement('option');
+          option.value = doc.id;
+          option.textContent = m.name;
+          updateSelect.appendChild(option);
+        });
+      });
+    }
+    populateMemberDropdowns();
+
+    // Add Member
+    document.getElementById('add-member-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const name = document.getElementById('new-member-name').value.trim();
+      const cls = document.getElementById('new-member-class').value;
+      const cp = parseInt(document.getElementById('new-member-cp').value);
+      let avatar = document.getElementById('new-member-avatar').value.trim();
+      if(!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
+      const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
+      if(!name || !cls || isNaN(cp)) return alert("Fill all fields");
+
+      membersRef.add({
+        name:name,
+        class:cls,
+        classColor:color,
+        cp:cp,
+        growth:0,
+        weeklyCP:[{week:'Week 1', cp:cp, growth:0, rank:'-'}],
+        avatar:avatar
+      }).then(() => {
+        alert("Member added!");
+        document.getElementById('add-member-form').reset();
+        populateMemberDropdowns();
+        updateLeaderboards();
       });
     });
-  }
-  populateMemberDropdowns();
 
-  // Add new member
-  document.getElementById('add-member-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const name = document.getElementById('new-member-name').value.trim();
-    const cls = document.getElementById('new-member-class').value;
-    const cp = parseInt(document.getElementById('new-member-cp').value);
-    const avatar = document.getElementById('new-member-avatar').value.trim();
-    const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
-    if(!name || !cls || isNaN(cp) || !avatar) return alert("Fill all fields");
+    // Update CP
+    document.getElementById('update-cp-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const memberId = document.getElementById('update-member-select').value;
+      const newCP = parseInt(document.getElementById('update-cp-value').value);
+      if(!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
 
-    membersRef.add({
-      name: name,
-      class: cls,
-      classColor: color,
-      cp: cp,
-      growth: 0,
-      weeklyCP: [{ week: 'Week 1', cp: cp, growth: 0, rank: '-' }],
-      avatar: avatar
-    }).then(() => {
-      alert("Member added!");
-      document.getElementById('add-member-form').reset();
-      populateMemberDropdowns();
-      updateLeaderboards();
-    });
-  });
-
-  // Update CP
-  document.getElementById('update-cp-form').addEventListener('submit', e => {
-    e.preventDefault();
-    const memberId = document.getElementById('update-member-select').value;
-    const newCP = parseInt(document.getElementById('update-cp-value').value);
-    if(!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
-
-    const memberDoc = membersRef.doc(memberId);
-    memberDoc.get().then(doc => {
-      if(!doc.exists) return alert("Member not found");
-      const data = doc.data();
-      const oldCP = data.cp || 0;
-      const growth = newCP - oldCP;
-      const weekNum = (data.weeklyCP?.length || 0) + 1;
-      const weeklyCP = [...(data.weeklyCP || []), { week: 'Week ' + weekNum, cp: newCP, growth: growth, rank: '-' }];
-
-      memberDoc.update({ cp: newCP, growth: growth, weeklyCP: weeklyCP })
-        .then(() => {
+      const memberDoc = membersRef.doc(memberId);
+      memberDoc.get().then(doc => {
+        if(!doc.exists) return alert("Member not found");
+        const data = doc.data();
+        const oldCP = data.cp || 0;
+        const growth = newCP - oldCP;
+        const weekNum = (data.weeklyCP?.length || 0) + 1;
+        const weeklyCP = [...(data.weeklyCP || []), { week:'Week ' + weekNum, cp:newCP, growth:growth, rank:'-' }];
+        memberDoc.update({ cp:newCP, growth:growth, weeklyCP:weeklyCP }).then(() => {
           alert(`CP updated! Growth: ${growth}`);
           document.getElementById('update-cp-form').reset();
           populateMemberDropdowns();
           updateLeaderboards();
         });
+      });
     });
-  });
 
-  // Delete member
-  document.getElementById('delete-member-btn').addEventListener('click', () => {
-    const memberId = document.getElementById('update-member-select').value;
-    if(!memberId) return alert("Select a member to delete");
-    if(!confirm("Are you sure you want to delete this member?")) return;
+    // Delete Member
+    document.getElementById('delete-member-btn').addEventListener('click', () => {
+      const memberId = document.getElementById('update-member-select').value;
+      if(!memberId) return alert("Select a member to delete");
+      if(!confirm("Are you sure you want to delete this member?")) return;
 
-    membersRef.doc(memberId).delete().then(() => {
-      alert("Member deleted!");
-      populateMemberDropdowns();
-      updateLeaderboards();
+      membersRef.doc(memberId).delete().then(() => {
+        alert("Member deleted!");
+        populateMemberDropdowns();
+        updateLeaderboards();
+      });
     });
-  });
 
-  // Update Leaderboards & Dashboard Stats
-  const totalCPContainer = document.getElementById('total-cp-leaderboard');
-  const weeklyGrowthContainer = document.getElementById('weekly-growth-leaderboard');
-  const totalMembersEl = document.getElementById('total-members');
-  const avgCPEl = document.getElementById('avg-cp');
-  const topGrowthEl = document.getElementById('top-growth');
-  const activeClassesEl = document.getElementById('active-classes');
-  const membersGrid = document.getElementById('members-grid');
+    // Update Leaderboards & Members Grid
+    const totalMembersEl = document.getElementById('total-members');
+    const avgCPEl = document.getElementById('avg-cp');
+    const topGrowthEl = document.getElementById('top-growth');
+    const activeClassesEl = document.getElementById('active-classes');
+    const membersGrid = document.getElementById('members-grid');
 
-  function updateLeaderboards() {
-    membersRef.get().then(snapshot => {
-      const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    function updateLeaderboards() {
+      membersRef.get().then(snapshot => {
+        const members = snapshot.docs.map(doc => ({id:doc.id,...doc.data()}));
+        totalMembersEl.textContent = members.length;
+        avgCPEl.textContent = members.length ? Math.round(members.reduce((a,b)=>a+b.cp,0)/members.length).toLocaleString() : 0;
+        topGrowthEl.textContent = members.length ? Math.max(...members.map(m=>m.growth||0)).toLocaleString() : 0;
+        const activeClasses = [...new Set(members.map(m=>m.class))];
+        activeClassesEl.textContent = activeClasses.length + '/9';
 
-      // Update Dashboard Stats
-      totalMembersEl.textContent = members.length;
-      avgCPEl.textContent = members.length ? Math.round(members.reduce((a,b)=>a+b.cp,0)/members.length).toLocaleString() : 0;
-      topGrowthEl.textContent = members.length ? Math.max(...members.map(m=>m.growth||0)).toLocaleString() : 0;
-      const activeClasses = [...new Set(members.map(m=>m.class))];
-      activeClassesEl.textContent = activeClasses.length + '/9';
+        // Sort by CP for rank
+        const totalCPRanked = [...members].sort((a,b)=>b.cp-a.cp);
+        totalCPRanked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
 
-      // Sort for leaderboards
-      const totalCPRanked = [...members].sort((a,b)=>b.cp-a.cp);
-      totalCPRanked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
-
-      const growthRanked = [...members].sort((a,b)=>(b.growth||0)-(a.growth||0));
-
-      // Render Members Grid
-      membersGrid.innerHTML = members.map(m => `
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-          <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center space-x-3">
-              <img src="${m.avatar}" alt="${m.name}" class="w-12 h-12 rounded-full">
-              <div>
-                <h4 class="font-bold">${m.name}</h4>
-                <span class="class-badge ${m.classColor} text-white">${m.class}</span>
+        // Render members grid
+        membersGrid.innerHTML = members.map(m => `
+          <div class="bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <img src="${m.avatar || defaultAvatars[m.class] || defaultAvatars['Bare Hand']}" alt="${m.name}" class="w-12 h-12 rounded-full">
+                <div>
+                  <h4 class="font-bold">${m.name}</h4>
+                  <span class="class-badge ${m.classColor} text-white">${m.class}</span>
+                </div>
+              </div>
+              <div class="achievement-badge bg-yellow-500 text-gray-900 rounded-full p-2">
+                <i data-feather="star"></i>
               </div>
             </div>
-            <div class="achievement-badge bg-yellow-500 text-gray-900 rounded-full p-2">
-              <i data-feather="star"></i>
+            <div class="mb-4">
+              <div class="flex justify-between text-sm mb-1">
+                <span>Current CP: ${m.cp.toLocaleString()}</span>
+                <span class="text-green-400">${m.growth>=0 ? '+' : ''}${(m.growth||0).toLocaleString()}</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2">
+                <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width:${Math.min(100,(m.cp/20000)*100)}%"></div>
+              </div>
             </div>
+            <button class="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition-colors" onclick="viewMemberDetail('${m.id}')">View Progress</button>
           </div>
-          <div class="mb-4">
-            <div class="flex justify-between text-sm mb-1">
-              <span>Current CP: ${m.cp.toLocaleString()}</span>
-              <span class="text-green-400">${m.growth>=0 ? '+' : ''}${(m.growth||0).toLocaleString()}</span>
-            </div>
-            <div class="w-full bg-gray-700 rounded-full h-2">
-              <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width:${Math.min(100,(m.cp/20000)*100)}%"></div>
-            </div>
-          </div>
-          <button class="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition-colors" onclick="viewMemberDetail('${m.id}')">View Progress</button>
-        </div>
-      `).join('');
+        `).join('');
 
-      feather.replace();
+        feather.replace();
+      });
+    }
+    updateLeaderboards();
+    setInterval(updateLeaderboards,10000);
+
+    function viewMemberDetail(memberId){
+      window.location.href = `members-detail.html?id=${memberId}`;
+    }
+
+    // Guild Progress Chart
+    const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
+    const guildProgressChart = new Chart(guildCtx, {
+      type:'line',
+      data:{labels:['Week 1','Week 2','Week 3','Week 4','Week 5'], datasets:[{label:'Average Guild CP', data:[0,0,0,0,0], borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.1)', tension:0.4, fill:true}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false, grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{color:'rgba(255,255,255,0.1)'}}}}
     });
-  }
 
-  updateLeaderboards();
-  setInterval(updateLeaderboards, 10000); // auto-refresh
+    function updateGuildChart(){
+      membersRef.get().then(snapshot=>{
+        const members = snapshot.docs.map(doc=>doc.data());
+        const weeks = 5;
+        const avgCPPerWeek = [];
+        for(let w=0; w<weeks; w++){
+          const weekCPs = members.map(m => (m.weeklyCP && m.weeklyCP[w]?.cp)||0);
+          const avg = weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
+          avgCPPerWeek.push(avg);
+        }
+        guildProgressChart.data.datasets[0].data = avgCPPerWeek;
+        guildProgressChart.update();
+      });
+    }
+    updateGuildChart();
+    setInterval(updateGuildChart,10000);
 
-  // Optional: Navigate to member detail page
-  function viewMemberDetail(memberId) {
-    window.location.href = `members-detail.html?id=${memberId}`;
-  }
+    // Vanta Globe
+    VANTA.GLOBE({ el:"#vanta-globe", mouseControls:true, touchControls:true, gyroControls:false, minHeight:200, minWidth:200, scale:1, scaleMobile:1, color:0xffd700, backgroundColor:0x667eea });
 
-  // Guild Progress Chart (average CP)
-  const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
-  const guildProgressChart = new Chart(guildCtx, {
-    type: 'line',
-    data: { labels: ['Week 1','Week 2','Week 3','Week 4','Week 5'], datasets:[{label:'Average Guild CP', data:[0,0,0,0,0], borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.1)', tension:0.4, fill:true}]},
-    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false, grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{color:'rgba(255,255,255,0.1)'}}}}
-  });
-
-  function updateGuildChart() {
-    membersRef.get().then(snapshot => {
-      const members = snapshot.docs.map(doc=>doc.data());
-      const weeks = 5;
-      const avgCPPerWeek = [];
-      for(let w=0; w<weeks; w++){
-        const weekCPs = members.map(m => (m.weeklyCP && m.weeklyCP[w]?.cp) || 0);
-        const avg = weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
-        avgCPPerWeek.push(avg);
-      }
-      guildProgressChart.data.datasets[0].data = avgCPPerWeek;
-      guildProgressChart.update();
+    // Mobile Menu Toggle
+    document.querySelector('button.md\\:hidden').addEventListener('click',function(){
+      const nav=document.querySelector('.hidden.md\\:flex');
+      nav.classList.toggle('hidden');
+      nav.classList.toggle('flex');
+      nav.classList.toggle('flex-col');
+      nav.classList.toggle('absolute');
+      nav.classList.toggle('top-16');
+      nav.classList.toggle('left-0');
+      nav.classList.toggle('right-0');
+      nav.classList.toggle('bg-gray-800');
+      nav.classList.toggle('p-4');
+      nav.classList.toggle('space-y-4');
     });
-  }
-
-  updateGuildChart();
-  setInterval(updateGuildChart, 10000);
-
-  // Vanta Globe
-  VANTA.GLOBE({ el:"#vanta-globe", mouseControls:true, touchControls:true, gyroControls:false, minHeight:200, minWidth:200, scale:1, scaleMobile:1, color:0xffd700, backgroundColor:0x667eea });
-
-  // Mobile Menu Toggle
-  document.querySelector('button.md\\:hidden').addEventListener('click',function(){
-    const nav=document.querySelector('.hidden.md\\:flex');
-    nav.classList.toggle('hidden');
-    nav.classList.toggle('flex');
-    nav.classList.toggle('flex-col');
-    nav.classList.toggle('absolute');
-    nav.classList.toggle('top-16');
-    nav.classList.toggle('left-0');
-    nav.classList.toggle('right-0');
-    nav.classList.toggle('bg-gray-800');
-    nav.classList.toggle('p-4');
-    nav.classList.toggle('space-y-4');
-  });
 </script>
 </body>
 </html>
