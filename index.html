@@ -201,15 +201,22 @@
       'Bare Hand':'https://i.imgur.com/Bo3ZY5vm.jpg'
     };
 
-    // Helper — get current week label (Sunday to Sunday)
-    function getCurrentWeekLabel() {
-      const today = new Date();
-      const sunday = new Date(today);
-      sunday.setDate(today.getDate() - today.getDay());
-      const year = sunday.getFullYear();
-      const weekNumber = Math.ceil(((sunday - new Date(year, 0, 1)) / 86400000 + sunday.getDay() + 1) / 7);
-      return `Week ${weekNumber}`;
-    }
+    // Helper — get current week label (Sunday to Saturday, e.g., "Oct-19 - Oct-25")
+function getCurrentWeekLabel() {
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sunday
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - day);
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+
+  const formatLabel = d => {
+    const options = { month: 'short', day: 'numeric' };
+    return d.toLocaleDateString('en-US', options);
+  };
+
+  return `${formatLabel(sunday)} - ${formatLabel(saturday)}`;
+}
 
     // Populate Member Dropdowns
     function populateMemberDropdowns() {
