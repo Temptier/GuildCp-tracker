@@ -195,43 +195,48 @@
     }
 
     // === 🔄 Update CP ===
-    document.getElementById("updateBtn").addEventListener("click", async () => {
-      const newCP = parseInt(document.getElementById("updateCP").value);
-      if (isNaN(newCP)) return alert("Please enter a valid CP value.");
+document.getElementById("updateBtn").addEventListener("click", async () => {
+  const newCP = parseInt(document.getElementById("updateCP").value);
+  if (isNaN(newCP)) return alert("Please enter a valid CP value.");
 
-      const oldCP = memberData.cp || 0;
-      const growth = newCP - oldCP;
-      const weekLabel = getCurrentWeekLabel();
-      let weeklyCP = memberData.weeklyCP || [];
+  const oldCP = memberData.cp || 0;
+  const growth = newCP - oldCP;
 
-      // Update or create entry for current week
-      const existingWeek = weeklyCP.find(w => w.week === weekLabel);
-      if (existingWeek) {
-        existingWeek.cp = newCP;
-        existingWeek.growth = growth;
-      } else {
-        weeklyCP.push({ week: weekLabel, cp: newCP, growth });
-      }
+  // Get current week label in "Mon-DD - Mon-DD" format
+  const weekLabel = getCurrentWeekLabel();
 
-      // Keep only last 4 weeks
-      if (weeklyCP.length > 4) weeklyCP = weeklyCP.slice(-4);
+  let weeklyCP = memberData.weeklyCP || [];
 
-      await membersRef.doc(memberId).update({
-        cp: newCP,
-        growth,
-        weeklyCP
-      });
+  // Update or create entry for current week
+  const existingWeek = weeklyCP.find(w => w.week === weekLabel);
+  if (existingWeek) {
+    existingWeek.cp = newCP;
+    existingWeek.growth = growth;
+  } else {
+    weeklyCP.push({ week: weekLabel, cp: newCP, growth });
+  }
 
-      alert(`✅ Combat Power updated to ${newCP.toLocaleString()} (Growth: ${growth >= 0 ? '+' : ''}${growth})`);
+  // Keep only last 4 weeks
+  if (weeklyCP.length > 4) weeklyCP = weeklyCP.slice(-4);
 
-      // Reload latest data
-      memberData.cp = newCP;
-      memberData.growth = growth;
-      memberData.weeklyCP = weeklyCP;
-      document.getElementById("updateCP").value = "";
-      updateHistoryTable();
-      renderChart();
-    });
+  // Update Firestore
+  await membersRef.doc(memberId).update({
+    cp: newCP,
+    growth,
+    weeklyCP
+  });
+
+  alert(`✅ Combat Power updated to ${newCP.toLocaleString()} (Growth: ${growth >= 0 ? '+' : ''}${growth})`);
+
+  // Reload latest data
+  memberData.cp = newCP;
+  memberData.growth = growth;
+  memberData.weeklyCP = weeklyCP;
+
+  document.getElementById("updateCP").value = "";
+  updateHistoryTable();
+  renderChart();
+});
 
     // === 🗑️ Delete Member ===
     document.getElementById("deleteBtn").addEventListener("click", async () => {
