@@ -264,7 +264,7 @@
       }
     });
 
-    // === 🗓️ Update CP (Grouped by Real Calendar Weeks) ===
+   // === 🗓️ Update CP (Grouped by Real Calendar Weeks, Local Timezone Aware) ===
 document.getElementById('update-cp-form').addEventListener('submit', async e => {
   e.preventDefault();
   const memberId = document.getElementById('update-member-select').value;
@@ -281,25 +281,25 @@ document.getElementById('update-cp-form').addEventListener('submit', async e => 
     const growth = newCP - oldCP;
     const weeklyCP = data.weeklyCP || [];
 
-    // --- 🗓️ Determine current Sunday-to-Saturday week label ---
+    // --- 🗓️ Determine current Sunday-to-Saturday week label (LOCAL TIME) ---
     const now = new Date();
-    const day = now.getDay(); // 0 = Sunday
-    const sunday = new Date(now);
-    sunday.setDate(now.getDate() - day);
+    const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000); // adjust for local offset
+    const day = localNow.getDay(); // 0 = Sunday
+    const sunday = new Date(localNow);
+    sunday.setDate(localNow.getDate() - day);
     const saturday = new Date(sunday);
     saturday.setDate(sunday.getDate() + 6);
 
-    const formatDate = d => d.toISOString().split('T')[0];
-    const weekLabel = `${formatDate(sunday)} - ${formatDate(saturday)}`;
+    // ✅ Format: Oct-19 - Oct-25
+    const formatShortDate = d => d.toLocaleString('en-US', { month: 'short', day: '2-digit' });
+    const weekLabel = `${formatShortDate(sunday)} - ${formatShortDate(saturday)}`;
 
     // --- 🧠 Find or update existing week entry ---
     const existingWeekIndex = weeklyCP.findIndex(w => w.week === weekLabel);
     if (existingWeekIndex !== -1) {
-      // Update same week entry
       weeklyCP[existingWeekIndex].cp = newCP;
       weeklyCP[existingWeekIndex].growth = growth;
     } else {
-      // Add new week entry
       weeklyCP.push({
         week: weekLabel,
         cp: newCP,
