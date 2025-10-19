@@ -431,10 +431,14 @@ const guildProgressChart = new Chart(guildCtx, {
   }
 });
 
-// Helper — get last 4 weeks from all members
+// Helper — get last 4 unique week labels
 function getLast4WeekLabels(members) {
   const allWeeks = new Set();
-  members.forEach(m => m.weeklyCP?.forEach(w => allWeeks.add(w.week)));
+  members.forEach(m => {
+    const latestPerWeek = {};
+    m.weeklyCP?.forEach(w => latestPerWeek[w.week] = w.cp); // only last update counts
+    Object.keys(latestPerWeek).forEach(w => allWeeks.add(w));
+  });
   const sortedWeeks = Array.from(allWeeks).sort((a,b) => {
     const [sundayA] = a.split(' - ');
     const [sundayB] = b.split(' - ');
@@ -447,8 +451,13 @@ function updateGuildChart() {
   membersRef.get().then(snapshot => {
     const members = snapshot.docs.map(doc => doc.data());
     const weekLabels = getLast4WeekLabels(members);
+
     const avgCPPerWeek = weekLabels.map(week => {
-      const weekCPs = members.map(m => m.weeklyCP?.find(w => w.week === week)?.cp || 0);
+      const weekCPs = members.map(m => {
+        // pick the latest update in that week
+        const entries = m.weeklyCP?.filter(w => w.week === week);
+        return entries?.length ? entries[entries.length - 1].cp : 0;
+      });
       return weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
     });
 
