@@ -115,51 +115,74 @@
       return `Week ${weekNum}`;
     }
 
-    // --- 🧮 Update Leaderboard ---
-    async function loadLeaderboard() {
-      const snapshot = await membersRef.get();
-      const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      if (!members.length) return;
+    // Helper — format week label as "Mon-DD - Mon-DD"
+function formatWeekLabel(sunday, saturday) {
+  const options = { month: 'short', day: 'numeric' };
+  return `${sunday.toLocaleDateString('en-US', options)} - ${saturday.toLocaleDateString('en-US', options)}`;
+}
 
-      // Sort by CP descending
-      members.sort((a, b) => b.cp - a.cp);
-      members.forEach((m, i) => {
-        membersRef.doc(m.id).update({ rank: i + 1 });
-      });
+// Helper — get current Sunday-to-Saturday week label
+function getCurrentWeekLabel() {
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sunday
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - day);
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+  return formatWeekLabel(sunday, saturday);
+}
 
-      const totalMembers = members.length;
-      const avgCP = Math.round(members.reduce((a, b) => a + (b.cp || 0), 0) / totalMembers);
-      const topGrowth = Math.max(...members.map(m => m.growth || 0));
-      const activeClasses = [...new Set(members.map(m => m.class))].length;
+// --- 🧮 Update Leaderboard ---
+async function loadLeaderboard() {
+  const snapshot = await membersRef.get();
+  const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  if (!members.length) return;
 
-      document.getElementById("totalMembers").textContent = totalMembers;
-      document.getElementById("avgCP").textContent = avgCP.toLocaleString();
-      document.getElementById("topGrowth").textContent = topGrowth.toLocaleString();
-      document.getElementById("activeClasses").textContent = activeClasses;
+  // Sort by CP descending
+  members.sort((a, b) => b.cp - a.cp);
+  members.forEach((m, i) => {
+    membersRef.doc(m.id).update({ rank: i + 1 });
+  });
 
-      const tbody = document.getElementById("leaderboardBody");
-      tbody.innerHTML = members.map(m => `
-        <tr class="border-b border-gray-700 hover:bg-gray-700 fade-in">
-          <td class="py-3 font-bold">#${m.rank || '-'}</td>
-          <td class="py-3 flex items-center space-x-3">
-            <img src="${m.avatar || 'https://i.imgur.com/Bo3ZY5vm.jpg'}" class="w-10 h-10 rounded-full">
-            <span>${m.name}</span>
-          </td>
-          <td class="py-3"><span class="class-badge ${m.classColor || 'bg-gray-500'}">${m.class}</span></td>
-          <td class="py-3 font-bold">${(m.cp || 0).toLocaleString()}</td>
-          <td class="py-3 ${m.growth >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">
-            ${m.growth >= 0 ? '+' : ''}${(m.growth || 0).toLocaleString()}
-          </td>
-          <td class="py-3">${getCurrentWeekLabel()}</td>
-        </tr>
-      `).join('');
+  const totalMembers = members.length;
+  const avgCP = Math.round(members.reduce((a, b) => a + (b.cp || 0), 0) / totalMembers);
+  const topGrowth = Math.max(...members.map(m => m.growth || 0));
+  const activeClasses = [...new Set(members.map(m => m.class))].length;
 
-      feather.replace();
-    }
+  document.getElementById("totalMembers").textContent = totalMembers;
+  document.getElementById("avgCP").textContent = avgCP.toLocaleString();
+  document.getElementById("topGrowth").textContent = topGrowth.toLocaleString();
+  document.getElementById("activeClasses").textContent = activeClasses;
 
-    loadLeaderboard();
-    setInterval(loadLeaderboard, 15000);
+  const tbody = document.getElementById("leaderboardBody");
+  tbody.innerHTML = members.map(m => {
+    // Get latest CP for the current week
+    const weekLabel = getCurrentWeekLabel();
+    const latestWeekEntry = m.weeklyCP?.find(w => w.week === weekLabel) || {};
+    return `
+      <tr class="border-b border-gray-700 hover:bg-gray-700 fade-in">
+        <td class="py-3 font-bold">#${m.rank || '-'}</td>
+        <td class="py-3 flex items-center space-x-3">
+          <img src="${m.avatar || 'https://i.imgur.com/Bo3ZY5vm.jpg'}" class="w-10 h-10 rounded-full">
+          <span>${m.name}</span>
+        </td>
+        <td class="py-3"><span class="class-badge ${m.classColor || 'bg-gray-500'}">${m.class}</span></td>
+        <td class="py-3 font-bold">${(latestWeekEntry.cp ?? m.cp ?? 0).toLocaleString()}</td>
+        <td class="py-3 ${latestWeekEntry.growth >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">
+          ${latestWeekEntry.growth >= 0 ? '+' : ''}${(latestWeekEntry.growth ?? m.growth ?? 0).toLocaleString()}
+        </td>
+        <td class="py-3">${weekLabel}</td>
+      </tr>
+    `;
+  }).join('');
+
+  feather.replace();
+}
+
+loadLeaderboard();
+setInterval(loadLeaderboard, 15000);
   </script>
+
 <!-- 📊 Analytics Section -->
   <section class="py-12">
     <div class="container mx-auto px-6">
