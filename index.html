@@ -264,40 +264,72 @@
       }
     });
 
-    // Update CP (4-week limit logic)
-    document.getElementById('update-cp-form').addEventListener('submit', e => {
-      e.preventDefault();
-      const memberId = document.getElementById('update-member-select').value;
-      const newCP = parseInt(document.getElementById('update-cp-value').value);
-      if (!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
+    // === 🗓️ Update CP (Grouped by Real Calendar Weeks) ===
+document.getElementById('update-cp-form').addEventListener('submit', async e => {
+  e.preventDefault();
+  const memberId = document.getElementById('update-member-select').value;
+  const newCP = parseInt(document.getElementById('update-cp-value').value);
+  if (!memberId || isNaN(newCP)) return alert("Select a member and enter a valid CP value.");
 
-      const memberDoc = membersRef.doc(memberId);
-      memberDoc.get().then(doc => {
-        if (!doc.exists) return alert("Member not found");
-        const data = doc.data();
-        const oldCP = data.cp || 0;
-        const growth = newCP - oldCP;
-        const currentWeek = getCurrentWeekLabel();
+  try {
+    const memberDoc = membersRef.doc(memberId);
+    const docSnap = await memberDoc.get();
+    if (!docSnap.exists) return alert("Member not found!");
+    const data = docSnap.data();
 
-        // Update or append weekly record (keep 4)
-        let weeklyCP = data.weeklyCP || [];
-        const existingWeek = weeklyCP.find(w => w.week === currentWeek);
-        if (existingWeek) {
-          existingWeek.cp = newCP;
-          existingWeek.growth = growth;
-        } else {
-          weeklyCP.push({ week: currentWeek, cp: newCP, growth: growth, rank: '-' });
-        }
-        if (weeklyCP.length > 4) weeklyCP.shift(); // keep last 4
+    const oldCP = data.cp || 0;
+    const growth = newCP - oldCP;
+    const weeklyCP = data.weeklyCP || [];
 
-        memberDoc.update({ cp: newCP, growth, weeklyCP }).then(() => {
-          alert(`CP updated! Growth: ${growth > 0 ? '+' : ''}${growth}`);
-          e.target.reset();
-          populateMemberDropdowns();
-          updateLeaderboards();
-        });
+    // --- 🗓️ Determine current Sunday-to-Saturday week label ---
+    const now = new Date();
+    const day = now.getDay(); // 0 = Sunday
+    const sunday = new Date(now);
+    sunday.setDate(now.getDate() - day);
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+
+    const formatDate = d => d.toISOString().split('T')[0];
+    const weekLabel = `${formatDate(sunday)} - ${formatDate(saturday)}`;
+
+    // --- 🧠 Find or update existing week entry ---
+    const existingWeekIndex = weeklyCP.findIndex(w => w.week === weekLabel);
+    if (existingWeekIndex !== -1) {
+      // Update same week entry
+      weeklyCP[existingWeekIndex].cp = newCP;
+      weeklyCP[existingWeekIndex].growth = growth;
+    } else {
+      // Add new week entry
+      weeklyCP.push({
+        week: weekLabel,
+        cp: newCP,
+        growth: growth,
+        rank: '-'
       });
+    }
+
+    // --- 🧹 Keep only the last 4 weeks ---
+    if (weeklyCP.length > 4) {
+      weeklyCP.splice(0, weeklyCP.length - 4);
+    }
+
+    // --- 💾 Update Firestore ---
+    await memberDoc.update({
+      cp: newCP,
+      growth: growth,
+      weeklyCP: weeklyCP
     });
+
+    alert(`✅ Combat Power updated successfully! Growth: ${growth >= 0 ? '+' : ''}${growth}`);
+    document.getElementById('update-cp-form').reset();
+    populateMemberDropdowns();
+    updateLeaderboards();
+
+  } catch (error) {
+    console.error("Error updating CP:", error);
+    alert("❌ Failed to update CP. Check console for details.");
+  }
+});
 
     // Delete Member
     document.getElementById('delete-member-btn').addEventListener('click', () => {
