@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>GuildPower Tracker</title>
   <link rel="icon" href="/static/favicon.ico" type="image/x-icon">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -11,6 +11,7 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.globe.min.js"></script>
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
     .medieval-font { font-family: 'MedievalSharp', cursive; }
@@ -49,9 +50,8 @@
         <h2 class="text-5xl md:text-6xl font-bold mb-6 medieval-font">CELESTIALS</h2>
         <p class="text-xl mb-8 text-gray-200">Track your guild's Combat Power progression and dominate the rankings!</p>
         <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="leaderboards.html" 
-             class="frosted-glass border border-white/30 hover:bg-white/10 text-white font-bold py-3 px-8 rounded-lg transition-all inline-block">
-             View Leaderboard
+          <a href="leaderboards.html" class="frosted-glass border border-white/30 hover:bg-white/10 text-white font-bold py-3 px-8 rounded-lg transition-all inline-block">
+            View Leaderboard
           </a>
         </div>
       </div>
@@ -115,9 +115,7 @@
   <section id="members" class="py-16 bg-gray-900">
     <div class="container mx-auto px-6">
       <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Guild Members</h2>
-      <div class="flex flex-wrap gap-2 mb-8 justify-center" id="class-filters">
-        <!-- Class filters dynamically generated -->
-      </div>
+      <div class="flex flex-wrap gap-2 mb-8 justify-center" id="class-filters"></div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="members-grid">
         <!-- Members loaded from Firestore -->
       </div>
@@ -149,7 +147,7 @@
               <option value="Crossbow" data-color="bg-orange-500">Crossbow</option>
             </select>
             <input type="number" id="new-member-cp" placeholder="Initial CP" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
-            <input type="text" id="new-member-avatar" placeholder="Avatar URL" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
+            <input type="text" id="new-member-avatar" placeholder="Avatar URL (optional)" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3">
             <button type="submit" class="w-full bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-bold py-3 rounded-lg">Add Member</button>
           </form>
         </div>
@@ -158,7 +156,7 @@
         <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
           <h3 class="text-xl font-bold mb-4">Update / Delete Member</h3>
 
-<!-- Update CP -->
+          <!-- Update CP -->
           <form id="update-cp-form" class="space-y-4">
             <select id="update-member-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
               <option value="">Select Member</option>
@@ -175,8 +173,9 @@
     </div>
   </section>
 
-  <!-- Firebase Config & Initialization -->
+<!-- Firebase Config & Script -->
   <script>
+    // Initialize Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
       authDomain: "guildcombatpower.firebaseapp.com",
@@ -202,6 +201,16 @@
       'Bare Hand':'https://i.imgur.com/Bo3ZY5vm.jpg'
     };
 
+    // Helper — get current week label (Sunday to Sunday)
+    function getCurrentWeekLabel() {
+      const today = new Date();
+      const sunday = new Date(today);
+      sunday.setDate(today.getDate() - today.getDay());
+      const year = sunday.getFullYear();
+      const weekNumber = Math.ceil(((sunday - new Date(year, 0, 1)) / 86400000 + sunday.getDay() + 1) / 7);
+      return `Week ${weekNumber}`;
+    }
+
     // Populate Member Dropdowns
     function populateMemberDropdowns() {
       const updateSelect = document.getElementById('update-member-select');
@@ -218,70 +227,72 @@
     }
     populateMemberDropdowns();
 
-    // Add Member (with duplicate prevention & case-insensitive name)
-document.getElementById('add-member-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const name = document.getElementById('new-member-name').value.trim();
-  const cls = document.getElementById('new-member-class').value;
-  const cp = parseInt(document.getElementById('new-member-cp').value);
-  let avatar = document.getElementById('new-member-avatar').value.trim();
-  if (!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
-  const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
-  if (!name || !cls || isNaN(cp)) return alert("Please fill in all fields.");
+    // Add Member (prevent duplicate)
+    document.getElementById('add-member-form').addEventListener('submit', async e => {
+      e.preventDefault();
+      const name = document.getElementById('new-member-name').value.trim();
+      const cls = document.getElementById('new-member-class').value;
+      const cp = parseInt(document.getElementById('new-member-cp').value);
+      let avatar = document.getElementById('new-member-avatar').value.trim();
+      if (!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
+      const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
+      if (!name || !cls || isNaN(cp)) return alert("Please fill all fields");
 
-  try {
-    // 🔍 Check for duplicate (case-insensitive)
-    const snapshot = await membersRef.get();
-    const exists = snapshot.docs.some(doc => {
-      const data = doc.data();
-      return data.name.toLowerCase() === name.toLowerCase() && data.class === cls;
+      try {
+        const snapshot = await membersRef.get();
+        const exists = snapshot.docs.some(doc => {
+          const data = doc.data();
+          return data.name.toLowerCase() === name.toLowerCase() && data.class === cls;
+        });
+        if (exists) return alert("⚠️ A member with this name and class already exists!");
+
+        const currentWeek = getCurrentWeekLabel();
+        await membersRef.add({
+          name, class: cls, classColor: color, cp, growth: 0,
+          weeklyCP: [{ week: currentWeek, cp, growth: 0, rank: '-' }],
+          avatar
+        });
+
+        alert("✅ Member added successfully!");
+        e.target.reset();
+        populateMemberDropdowns();
+        updateLeaderboards();
+
+      } catch (err) {
+        console.error(err);
+        alert("❌ Failed to add member.");
+      }
     });
 
-    if (exists) {
-      alert("⚠️ A member with this name and class already exists!");
-      return;
-    }
-
-    // ✅ Add new member
-    await membersRef.add({
-      name: name,
-      class: cls,
-      classColor: color,
-      cp: cp,
-      growth: 0,
-      weeklyCP: [{ week: 'Week 1', cp: cp, growth: 0, rank: '-' }],
-      avatar: avatar
-    });
-
-    alert("✅ Member added successfully!");
-    document.getElementById('add-member-form').reset();
-    populateMemberDropdowns();
-    updateLeaderboards();
-
-  } catch (error) {
-    console.error("Error adding member:", error);
-    alert("❌ Failed to add member. Check console for details.");
-  }
-});
-
-    // Update CP
+    // Update CP (4-week limit logic)
     document.getElementById('update-cp-form').addEventListener('submit', e => {
       e.preventDefault();
       const memberId = document.getElementById('update-member-select').value;
       const newCP = parseInt(document.getElementById('update-cp-value').value);
-      if(!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
+      if (!memberId || isNaN(newCP)) return alert("Select member and enter valid CP");
 
       const memberDoc = membersRef.doc(memberId);
       memberDoc.get().then(doc => {
-        if(!doc.exists) return alert("Member not found");
+        if (!doc.exists) return alert("Member not found");
         const data = doc.data();
         const oldCP = data.cp || 0;
         const growth = newCP - oldCP;
-        const weekNum = (data.weeklyCP?.length || 0) + 1;
-        const weeklyCP = [...(data.weeklyCP || []), { week:'Week ' + weekNum, cp:newCP, growth:growth, rank:'-' }];
-        memberDoc.update({ cp:newCP, growth:growth, weeklyCP:weeklyCP }).then(() => {
-          alert(`CP updated! Growth: ${growth}`);
-          document.getElementById('update-cp-form').reset();
+        const currentWeek = getCurrentWeekLabel();
+
+        // Update or append weekly record (keep 4)
+        let weeklyCP = data.weeklyCP || [];
+        const existingWeek = weeklyCP.find(w => w.week === currentWeek);
+        if (existingWeek) {
+          existingWeek.cp = newCP;
+          existingWeek.growth = growth;
+        } else {
+          weeklyCP.push({ week: currentWeek, cp: newCP, growth: growth, rank: '-' });
+        }
+        if (weeklyCP.length > 4) weeklyCP.shift(); // keep last 4
+
+        memberDoc.update({ cp: newCP, growth, weeklyCP }).then(() => {
+          alert(`CP updated! Growth: ${growth > 0 ? '+' : ''}${growth}`);
+          e.target.reset();
           populateMemberDropdowns();
           updateLeaderboards();
         });
@@ -291,8 +302,8 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
     // Delete Member
     document.getElementById('delete-member-btn').addEventListener('click', () => {
       const memberId = document.getElementById('update-member-select').value;
-      if(!memberId) return alert("Select a member to delete");
-      if(!confirm("Are you sure you want to delete this member?")) return;
+      if (!memberId) return alert("Select a member to delete");
+      if (!confirm("Are you sure you want to delete this member?")) return;
 
       membersRef.doc(memberId).delete().then(() => {
         alert("Member deleted!");
@@ -301,7 +312,7 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
       });
     });
 
-    // Update Leaderboards & Members Grid
+    // Leaderboards & Guild Summary
     const totalMembersEl = document.getElementById('total-members');
     const avgCPEl = document.getElementById('avg-cp');
     const topGrowthEl = document.getElementById('top-growth');
@@ -310,23 +321,23 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
 
     function updateLeaderboards() {
       membersRef.get().then(snapshot => {
-        const members = snapshot.docs.map(doc => ({id:doc.id,...doc.data()}));
+        const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
         totalMembersEl.textContent = members.length;
         avgCPEl.textContent = members.length ? Math.round(members.reduce((a,b)=>a+b.cp,0)/members.length).toLocaleString() : 0;
         topGrowthEl.textContent = members.length ? Math.max(...members.map(m=>m.growth||0)).toLocaleString() : 0;
-        const activeClasses = [...new Set(members.map(m=>m.class))];
+        const activeClasses = [...new Set(members.map(m => m.class))];
         activeClassesEl.textContent = activeClasses.length + '/9';
 
-        // Sort by CP for rank
-        const totalCPRanked = [...members].sort((a,b)=>b.cp-a.cp);
-        totalCPRanked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
+        // Sort by CP
+        const ranked = [...members].sort((a,b)=>b.cp-a.cp);
+        ranked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
 
-        // Render members grid
+        // Render members
         membersGrid.innerHTML = members.map(m => `
           <div class="bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
             <div class="flex items-center justify-between mb-4">
               <div class="flex items-center space-x-3">
-                <img src="${m.avatar || defaultAvatars[m.class] || defaultAvatars['Bare Hand']}" alt="${m.name}" class="w-12 h-12 rounded-full">
+                <img src="${m.avatar || defaultAvatars[m.class]}" alt="${m.name}" class="w-12 h-12 rounded-full">
                 <div>
                   <h4 class="font-bold">${m.name}</h4>
                   <span class="class-badge ${m.classColor} text-white">${m.class}</span>
@@ -339,7 +350,7 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
             <div class="mb-4">
               <div class="flex justify-between text-sm mb-1">
                 <span>Current CP: ${m.cp.toLocaleString()}</span>
-                <span class="text-green-400">${m.growth>=0 ? '+' : ''}${(m.growth||0).toLocaleString()}</span>
+                <span class="text-green-400">${m.growth>=0?'+':''}${(m.growth||0).toLocaleString()}</span>
               </div>
               <div class="w-full bg-gray-700 rounded-full h-2">
                 <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width:${Math.min(100,(m.cp/20000)*100)}%"></div>
@@ -348,35 +359,35 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
             <button class="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition-colors" onclick="viewMemberDetail('${m.id}')">View Progress</button>
           </div>
         `).join('');
-
         feather.replace();
       });
     }
     updateLeaderboards();
-    setInterval(updateLeaderboards,10000);
+    setInterval(updateLeaderboards, 10000);
 
-    function viewMemberDetail(memberId){
+    function viewMemberDetail(memberId) {
       window.location.href = `members-detail.html?id=${memberId}`;
     }
 
-    // Guild Progress Chart
+    // Guild CP Progress Chart
     const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
     const guildProgressChart = new Chart(guildCtx, {
       type:'line',
-      data:{labels:['Week 1','Week 2','Week 3','Week 4','Week 5'], datasets:[{label:'Average Guild CP', data:[0,0,0,0,0], borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.1)', tension:0.4, fill:true}]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false, grid:{color:'rgba(255,255,255,0.1)'}}, x:{grid:{color:'rgba(255,255,255,0.1)'}}}}
+      data:{labels:['Week 1','Week 2','Week 3','Week 4'], datasets:[{label:'Average Guild CP', data:[0,0,0,0], borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.1)', tension:0.4, fill:true}]},
+      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false}}}
     });
 
     function updateGuildChart(){
       membersRef.get().then(snapshot=>{
         const members = snapshot.docs.map(doc=>doc.data());
-        const weeks = 5;
-        const avgCPPerWeek = [];
-        for(let w=0; w<weeks; w++){
-          const weekCPs = members.map(m => (m.weeklyCP && m.weeklyCP[w]?.cp)||0);
-          const avg = weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
-          avgCPPerWeek.push(avg);
-        }
+        const allWeeks = new Set();
+        members.forEach(m=>m.weeklyCP?.forEach(w=>allWeeks.add(w.week)));
+        const weekLabels = Array.from(allWeeks).slice(-4);
+        const avgCPPerWeek = weekLabels.map(week=>{
+          const weekCPs = members.map(m => m.weeklyCP?.find(w=>w.week===week)?.cp || 0);
+          return weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
+        });
+        guildProgressChart.data.labels = weekLabels;
         guildProgressChart.data.datasets[0].data = avgCPPerWeek;
         guildProgressChart.update();
       });
@@ -401,6 +412,6 @@ document.getElementById('add-member-form').addEventListener('submit', async e =>
       nav.classList.toggle('p-4');
       nav.classList.toggle('space-y-4');
     });
-</script>
+  </script>
 </body>
 </html>
