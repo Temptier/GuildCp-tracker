@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Member Detail - GuildPower Tracker</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Member Detail - GuildPower Tracker Pro</title>
   <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -14,255 +14,235 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@300;400;500;600;700&display=swap');
     .medieval-font { font-family: 'MedievalSharp', cursive; }
-    .class-badge {
-      padding: 0.25rem 0.75rem;
-      border-radius: 9999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .btn {
-      padding: 0.5rem 1rem;
-      border-radius: 0.5rem;
-      font-weight: 600;
-      transition: background-color 0.2s;
-    }
   </style>
 </head>
 
 <body class="bg-gray-900 text-white font-['Inter']">
-
-  <!-- Navigation -->
-  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center">
-    <div class="flex items-center space-x-2">
-      <a href="index.html" class="flex items-center space-x-2">
-        <i data-feather="arrow-left" class="text-yellow-400"></i>
-        <h1 class="text-xl medieval-font">GuildPower Tracker</h1>
-      </a>
-    </div>
+  <!-- Navbar -->
+  <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center shadow-lg">
+    <a href="index.html" class="flex items-center space-x-2 text-yellow-400 hover:underline">
+      <i data-feather="arrow-left"></i>
+      <h1 class="text-xl medieval-font">Back to Leaderboard</h1>
+    </a>
   </nav>
 
-  <!-- Member Detail Section -->
-  <section class="py-12">
-    <div class="container mx-auto px-6">
-      <div class="max-w-4xl mx-auto">
+  <!-- Member Detail -->
+  <section class="py-10 px-6">
+    <div class="max-w-4xl mx-auto space-y-8">
 
-        <!-- Member Header -->
-        <div id="member-header" class="bg-gray-800 rounded-xl p-8 shadow-lg mb-8">
-          <div class="flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
-            <img id="member-avatar" src="" alt="Member Avatar" class="w-32 h-32 rounded-full border-4 border-yellow-400">
-            <div class="flex-1 text-center md:text-left">
-              <h2 id="member-name" class="text-4xl font-bold mb-2 medieval-font">Member Name</h2>
-              <span id="member-class" class="class-badge bg-blue-500 text-white text-lg">Class</span>
-              <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div class="text-center">
-                  <p class="text-gray-400">Current CP</p>
-                  <p id="member-cp" class="text-2xl font-bold">0</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Weekly Growth</p>
-                  <p id="member-growth" class="text-2xl font-bold text-green-400">0</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Rank</p>
-                  <p id="member-rank" class="text-2xl font-bold">#-</p>
-                </div>
-                <div class="text-center">
-                  <p class="text-gray-400">Member Since</p>
-                  <p id="member-since" class="text-xl font-bold">Week 1</p>
-                </div>
-              </div>
-            </div>
-          </div>
+      <!-- Profile Header -->
+      <div class="bg-gray-800 rounded-xl p-8 shadow-lg flex flex-col md:flex-row items-center md:items-start space-y-6 md:space-y-0 md:space-x-8">
+        <img id="avatar" src="" alt="Avatar" class="w-32 h-32 rounded-full border-4 border-yellow-400">
+        <div class="text-center md:text-left">
+          <h2 id="memberName" class="text-4xl font-bold mb-2 medieval-font">Loading...</h2>
+          <span id="memberClass" class="inline-block bg-blue-500 text-white px-4 py-1 rounded-full text-sm font-bold uppercase">Class</span>
         </div>
+      </div>
 
-        <!-- Update/Delete Controls -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
-          <h3 class="text-xl font-bold mb-4">Update Combat Power</h3>
-          <div class="flex flex-col sm:flex-row gap-4">
-            <input id="update-cp-input" type="number" placeholder="Enter new CP" class="w-full px-4 py-2 rounded-lg bg-gray-700 focus:outline-none focus:ring-2 focus:ring-yellow-400">
-            <button id="update-cp-btn" class="btn bg-yellow-500 text-gray-900 hover:bg-yellow-400">Update</button>
-            <button id="delete-member-btn" class="btn bg-red-600 hover:bg-red-500">Delete</button>
-          </div>
+      <!-- Update/Delete Controls -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg space-y-4">
+        <h3 class="text-xl font-bold mb-4">⚙️ Manage Member</h3>
+        <input id="updateCP" type="number" placeholder="Enter new Combat Power" class="w-full p-2 rounded bg-gray-700 text-white" />
+        <div class="flex space-x-4">
+          <button id="updateBtn" class="bg-green-500 hover:bg-green-600 text-black font-bold py-2 px-4 rounded w-1/2">
+            Update CP
+          </button>
+          <button id="deleteBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-1/2">
+            Delete Member
+          </button>
         </div>
+      </div>
 
-        <!-- Progress Chart -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-8">
-          <h3 class="text-xl font-bold mb-6">Combat Power Progression</h3>
-          <div class="h-80">
-            <canvas id="memberProgressChart"></canvas>
-          </div>
+      <!-- Chart -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-bold mb-6">📈 Combat Power Progression</h3>
+        <div class="h-80">
+          <canvas id="progressChart"></canvas>
         </div>
+      </div>
 
-        <!-- Weekly Data Table -->
-        <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
-          <h3 class="text-xl font-bold mb-6">Weekly CP History</h3>
-          <div class="overflow-x-auto">
-            <table class="w-full">
-              <thead>
-                <tr class="border-b border-gray-700">
-                  <th class="text-left py-3">Week</th>
-                  <th class="text-left py-3">Combat Power</th>
-                  <th class="text-left py-3">Growth</th>
-                  <th class="text-left py-3">Rank</th>
-                </tr>
-              </thead>
-              <tbody id="weekly-history-body">
-                <!-- Filled dynamically -->
-              </tbody>
-            </table>
-          </div>
+      <!-- Weekly CP History -->
+      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
+        <h3 class="text-xl font-bold mb-6">📜 Weekly History</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full">
+            <thead>
+              <tr class="border-b border-gray-700">
+                <th class="text-left py-3">Week</th>
+                <th class="text-left py-3">CP</th>
+                <th class="text-left py-3">Growth</th>
+              </tr>
+            </thead>
+            <tbody id="historyBody">
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
         </div>
-
       </div>
     </div>
   </section>
 
-<!-- Firebase Logic & Chart -->
-    <script>
-      // Firebase config (same as index)
-      const firebaseConfig = {
-        apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
-        authDomain: "guildcombatpower.firebaseapp.com",
-        projectId: "guildcombatpower",
-        storageBucket: "guildcombatpower.firebasestorage.app",
-        messagingSenderId: "862355543279",
-        appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
-      };
-      firebase.initializeApp(firebaseConfig);
-      const db = firebase.firestore();
-      const membersRef = db.collection('members');
+  <!-- Firebase & Script -->
+  <script>
+    // === 🔥 Firebase Config ===
+    const firebaseConfig = {
+      apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
+      authDomain: "guildcombatpower.firebaseapp.com",
+      projectId: "guildcombatpower",
+      storageBucket: "guildcombatpower.firebasestorage.app",
+      messagingSenderId: "862355543279",
+      appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const membersRef = db.collection("members");
 
-      const urlParams = new URLSearchParams(window.location.search);
-      const memberId = urlParams.get('id');
-      if (!memberId) {
-        alert("No member selected.");
+    // Helper: get URL param
+    function getParam(param) {
+      return new URLSearchParams(window.location.search).get(param);
+    }
+
+    const memberId = getParam("id");
+    let memberData = null;
+
+    // Helper: week label
+    function getCurrentWeekLabel() {
+      const now = new Date();
+      const day = now.getDay();
+      const sunday = new Date(now);
+      sunday.setDate(now.getDate() - day);
+      const saturday = new Date(sunday);
+      saturday.setDate(saturday.getDate() + 6);
+      const format = d => d.toISOString().split("T")[0];
+      return `${format(sunday)} - ${format(saturday)}`;
+    }
+
+    // === 🧾 Load member data ===
+    async function loadMember() {
+      const doc = await membersRef.doc(memberId).get();
+      if (!doc.exists) {
+        alert("Member not found!");
         window.location.href = "index.html";
+        return;
       }
+      memberData = doc.data();
 
-      // Elements
-      const nameEl = document.getElementById('member-name');
-      const classEl = document.getElementById('member-class');
-      const cpEl = document.getElementById('member-cp');
-      const growthEl = document.getElementById('member-growth');
-      const rankEl = document.getElementById('member-rank');
-      const sinceEl = document.getElementById('member-since');
-      const avatarEl = document.getElementById('member-avatar');
-      const weeklyBody = document.getElementById('weekly-history-body');
+// --- Populate UI ---
+      document.getElementById("memberName").textContent = memberData.name;
+      document.getElementById("memberClass").textContent = memberData.class;
+      document.getElementById("avatar").src =
+        memberData.avatar || "https://i.imgur.com/Bo3ZY5vm.jpg";
 
-      const updateBtn = document.getElementById('update-cp-btn');
-      const deleteBtn = document.getElementById('delete-member-btn');
-      const updateInput = document.getElementById('update-cp-input');
+      // Populate weekly history table
+      updateHistoryTable();
 
-      // Chart setup
-      const ctx = document.getElementById('memberProgressChart').getContext('2d');
-      const memberChart = new Chart(ctx, {
-        type: 'line',
+      // Render chart
+      renderChart();
+
+      feather.replace();
+    }
+
+    // === 📊 Update Chart ===
+    let chartInstance = null;
+    function renderChart() {
+      const ctx = document.getElementById("progressChart").getContext("2d");
+      const weeks = memberData.weeklyCP?.map(w => w.week) || [];
+      const cpValues = memberData.weeklyCP?.map(w => w.cp) || [];
+
+      if (chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: "line",
         data: {
-          labels: [],
+          labels: weeks,
           datasets: [{
-            label: 'Combat Power',
-            data: [],
-            borderColor: '#fbbf24',
-            backgroundColor: 'rgba(251,191,36,0.1)',
-            tension: 0.3,
+            label: "Combat Power",
+            data: cpValues,
+            borderColor: "#fbbf24",
+            backgroundColor: "rgba(251,191,36,0.15)",
+            tension: 0.4,
             fill: true
           }]
         },
         options: {
           responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
           scales: {
-            x: { grid: { color: 'rgba(255,255,255,0.1)' } },
-            y: { grid: { color: 'rgba(255,255,255,0.1)' } }
-          },
-          plugins: { legend: { display: false } }
+            y: { beginAtZero: false, grid: { color: "rgba(255,255,255,0.1)" } },
+            x: { grid: { color: "rgba(255,255,255,0.1)" } }
+          }
         }
       });
+    }
 
-      // Fetch & render member data
-      function loadMember() {
-        membersRef.doc(memberId).get().then(doc => {
-          if (!doc.exists) return alert("Member not found.");
-          const data = doc.data();
+    // === 📅 Update History Table ===
+    function updateHistoryTable() {
+      const body = document.getElementById("historyBody");
+      body.innerHTML = "";
+      const weeks = memberData.weeklyCP || [];
+      weeks.forEach((w, i) => {
+        const tr = document.createElement("tr");
+        tr.className = "border-b border-gray-700";
+        tr.innerHTML = `
+          <td class="py-2">${w.week}</td>
+          <td class="py-2">${w.cp.toLocaleString()}</td>
+          <td class="py-2 ${w.growth >= 0 ? 'text-green-400' : 'text-red-400'}">
+            ${w.growth >= 0 ? '+' : ''}${w.growth.toLocaleString()}
+          </td>
+        `;
+        body.appendChild(tr);
+      });
+    }
 
-          nameEl.textContent = data.name;
-          classEl.textContent = data.class;
-          classEl.className = `class-badge ${data.classColor} text-white text-lg`;
-          cpEl.textContent = data.cp.toLocaleString();
-          growthEl.textContent = (data.growth >= 0 ? "+" : "") + data.growth.toLocaleString();
-          growthEl.classList.toggle('text-green-400', data.growth >= 0);
-          growthEl.classList.toggle('text-red-400', data.growth < 0);
-          rankEl.textContent = data.rank ? "#" + data.rank : "-";
-          sinceEl.textContent = data.weeklyCP?.[0]?.week || "Week 1";
-          avatarEl.src = data.avatar || "https://i.imgur.com/I4Rku2cm.jpg";
+    // === 🔄 Update CP ===
+    document.getElementById("updateBtn").addEventListener("click", async () => {
+      const newCP = parseInt(document.getElementById("updateCP").value);
+      if (isNaN(newCP)) return alert("Please enter a valid CP value.");
 
-          // Weekly history table
-          weeklyBody.innerHTML = "";
-          data.weeklyCP?.forEach(entry => {
-            const row = document.createElement("tr");
-            row.className = "border-b border-gray-700";
-            row.innerHTML = `
-              <td class="py-2">${entry.week}</td>
-              <td class="py-2">${entry.cp.toLocaleString()}</td>
-              <td class="py-2 ${entry.growth >= 0 ? 'text-green-400' : 'text-red-400'}">
-                ${(entry.growth >= 0 ? "+" : "") + entry.growth.toLocaleString()}
-              </td>
-              <td class="py-2">${entry.rank || '-'}</td>
-            `;
-            weeklyBody.appendChild(row);
-          });
+      const oldCP = memberData.cp || 0;
+      const growth = newCP - oldCP;
+      const weekLabel = getCurrentWeekLabel();
+      let weeklyCP = memberData.weeklyCP || [];
 
-          // Chart update
-          const labels = data.weeklyCP.map(e => e.week);
-          const cpValues = data.weeklyCP.map(e => e.cp);
-          memberChart.data.labels = labels;
-          memberChart.data.datasets[0].data = cpValues;
-          memberChart.update();
-        });
+      // Update or create entry for current week
+      const existingWeek = weeklyCP.find(w => w.week === weekLabel);
+      if (existingWeek) {
+        existingWeek.cp = newCP;
+        existingWeek.growth = growth;
+      } else {
+        weeklyCP.push({ week: weekLabel, cp: newCP, growth });
       }
 
-      loadMember();
+      // Keep only last 4 weeks
+      if (weeklyCP.length > 4) weeklyCP = weeklyCP.slice(-4);
 
-      // Update CP logic (with 4-week cap)
-      updateBtn.addEventListener('click', async () => {
-        const newCP = parseInt(updateInput.value);
-        if (isNaN(newCP)) return alert("Enter a valid number.");
-        const docSnap = await membersRef.doc(memberId).get();
-        if (!docSnap.exists) return alert("Member not found.");
-
-        const data = docSnap.data();
-        const oldCP = data.cp || 0;
-        const growth = newCP - oldCP;
-        let weekly = data.weeklyCP || [];
-
-        // Weekly entry
-        const weekNum = weekly.length ? parseInt(weekly[weekly.length - 1].week.split(" ")[1]) + 1 : 1;
-        const newEntry = { week: "Week " + weekNum, cp: newCP, growth: growth, rank: data.rank || "-" };
-        weekly.push(newEntry);
-
-        // 🔁 Keep only last 4 weeks
-        if (weekly.length > 4) weekly = weekly.slice(-4);
-
-        await membersRef.doc(memberId).update({
-          cp: newCP,
-          growth: growth,
-          weeklyCP: weekly
-        });
-
-        alert(`✅ CP Updated! Growth: ${growth >= 0 ? "+" : ""}${growth}`);
-        updateInput.value = "";
-        loadMember();
+      await membersRef.doc(memberId).update({
+        cp: newCP,
+        growth,
+        weeklyCP
       });
 
-      // Delete Member
-      deleteBtn.addEventListener('click', async () => {
-        if (!confirm("Are you sure you want to delete this member?")) return;
-        await membersRef.doc(memberId).delete();
-        alert("🗑️ Member deleted!");
-        window.location.href = "index.html";
-      });
+      alert(`✅ Combat Power updated to ${newCP.toLocaleString()} (Growth: ${growth >= 0 ? '+' : ''}${growth})`);
 
-      feather.replace();
-    </script>
-  </body>
+      // Reload latest data
+      memberData.cp = newCP;
+      memberData.growth = growth;
+      memberData.weeklyCP = weeklyCP;
+      document.getElementById("updateCP").value = "";
+      updateHistoryTable();
+      renderChart();
+    });
+
+    // === 🗑️ Delete Member ===
+    document.getElementById("deleteBtn").addEventListener("click", async () => {
+      if (!confirm("Are you sure you want to delete this member?")) return;
+      await membersRef.doc(memberId).delete();
+      alert("🗑️ Member deleted successfully.");
+      window.location.href = "index.html";
+    });
+
+    // Load on start
+    loadMember();
+  </script>
+</body>
 </html>
