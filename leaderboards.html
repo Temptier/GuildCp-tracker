@@ -27,9 +27,9 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    th { cursor: pointer; }
   </style>
 </head>
-
 <body class="bg-gray-900 text-white font-['Inter']">
 
   <!-- Navigation -->
@@ -42,7 +42,7 @@
     </div>
   </nav>
 
-  <!-- Leaderboard Section -->
+<!-- Leaderboard Section -->
   <section class="py-12">
     <div class="container mx-auto px-6">
       <h2 class="text-4xl font-bold mb-8 text-center medieval-font">Guild Leaderboards</h2>
@@ -76,10 +76,10 @@
               <tr class="border-b border-gray-700">
                 <th class="py-3 text-left">Rank</th>
                 <th class="py-3 text-left">Member</th>
-                <th class="py-3 text-left">Class</th>
-                <th class="py-3 text-left">Current CP</th>
-                <th class="py-3 text-left">Weekly Growth</th>
-                <th class="py-3 text-left">Last Updated</th>
+                <th class="py-3 text-left" onclick="sortLeaderboard('class')">Class</th>
+                <th class="py-3 text-left" onclick="sortLeaderboard('cp')">Current CP</th>
+                <th class="py-3 text-left" onclick="sortLeaderboard('growth')">Weekly Growth</th>
+                <th class="py-3 text-left" onclick="sortLeaderboard('week')">Last Updated</th>
               </tr>
             </thead>
             <tbody id="leaderboardBody"></tbody>
@@ -89,206 +89,205 @@
     </div>
   </section>
 
-  <!-- Firebase Config & Scripts -->
-  <script>
-    // --- 🔥 Firebase Setup ---
-    const firebaseConfig = {
-      apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
-      authDomain: "guildcombatpower.firebaseapp.com",
-      projectId: "guildcombatpower",
-      storageBucket: "guildcombatpower.firebasestorage.app",
-      messagingSenderId: "862355543279",
-      appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
-    };
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    const membersRef = db.collection('members');
+<script>
+  // --- 🔥 Firebase Setup ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
+    authDomain: "guildcombatpower.firebaseapp.com",
+    projectId: "guildcombatpower",
+    storageBucket: "guildcombatpower.firebasestorage.app",
+    messagingSenderId: "862355543279",
+    appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+  const membersRef = db.collection('members');
 
-    // --- 🗓️ Helper: Get Week Label ---
-    function getCurrentWeekLabel() {
-      const today = new Date();
-      const day = today.getDay(); // 0 = Sunday
-      const sunday = new Date(today);
-      sunday.setDate(today.getDate() - day);
-      const year = sunday.getFullYear();
-      const weekNum = Math.ceil((((sunday - new Date(year, 0, 1)) / 86400000) + 1) / 7);
-      return `Week ${weekNum}`;
-    }
+  // --- Helper: Format week label "Oct-19 - Oct-25" ---
+  function formatWeekLabel(sunday, saturday) {
+    const options = { month: 'short', day: 'numeric' };
+    return `${sunday.toLocaleDateString('en-US', options)} - ${saturday.toLocaleDateString('en-US', options)}`;
+  }
 
-    // Helper — format week label as "Mon-DD - Mon-DD"
-function formatWeekLabel(sunday, saturday) {
-  const options = { month: 'short', day: 'numeric' };
-  return `${sunday.toLocaleDateString('en-US', options)} - ${saturday.toLocaleDateString('en-US', options)}`;
-}
+  // --- Helper: Get current Sunday-to-Saturday week label ---
+  function getCurrentWeekLabel() {
+    const today = new Date();
+    const day = today.getDay(); // 0 = Sunday
+    const sunday = new Date(today);
+    sunday.setDate(today.getDate() - day);
+    const saturday = new Date(sunday);
+    saturday.setDate(sunday.getDate() + 6);
+    return formatWeekLabel(sunday, saturday);
+  }
 
-// Helper — get current Sunday-to-Saturday week label
-function getCurrentWeekLabel() {
-  const today = new Date();
-  const day = today.getDay(); // 0 = Sunday
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - day);
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
-  return formatWeekLabel(sunday, saturday);
-}
+  // --- Leaderboard Data & Sorting ---
+  let currentSort = { key: 'rank', asc: true };
 
-// --- 🧮 Update Leaderboard ---
-async function loadLeaderboard() {
-  const snapshot = await membersRef.get();
-  const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  if (!members.length) return;
+  async function loadLeaderboard() {
+    const snapshot = await membersRef.get();
+    let members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (!members.length) return;
 
-  // Sort by CP descending
-  members.sort((a, b) => b.cp - a.cp);
-  members.forEach((m, i) => {
-    membersRef.doc(m.id).update({ rank: i + 1 });
-  });
+    // Sort by currentSort
+    members.sort((a, b) => {
+      let valA, valB;
+      switch (currentSort.key) {
+        case 'class':
+          valA = a.class || ''; valB = b.class || '';
+          return currentSort.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        case 'cp':
+          valA = a.cp || 0; valB = b.cp || 0;
+          return currentSort.asc ? valA - valB : valB - valA;
+        case 'growth':
+          valA = a.growth || 0; valB = b.growth || 0;
+          return currentSort.asc ? valA - valB : valB - valA;
+        case 'week':
+          valA = a.weeklyCP?.slice(-1)[0]?.week || ''; 
+          valB = b.weeklyCP?.slice(-1)[0]?.week || '';
+          return currentSort.asc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+        default: // rank
+          valA = a.rank || 0; valB = b.rank || 0;
+          return currentSort.asc ? valA - valB : valB - valA;
+      }
+    });
 
-  const totalMembers = members.length;
-  const avgCP = Math.round(members.reduce((a, b) => a + (b.cp || 0), 0) / totalMembers);
-  const topGrowth = Math.max(...members.map(m => m.growth || 0));
-  const activeClasses = [...new Set(members.map(m => m.class))].length;
+    // Update ranks in Firestore
+    members.forEach((m, i) => {
+      membersRef.doc(m.id).update({ rank: i + 1 });
+    });
 
-  document.getElementById("totalMembers").textContent = totalMembers;
-  document.getElementById("avgCP").textContent = avgCP.toLocaleString();
-  document.getElementById("topGrowth").textContent = topGrowth.toLocaleString();
-  document.getElementById("activeClasses").textContent = activeClasses;
+    // Update summary cards
+    const totalMembers = members.length;
+    const avgCP = Math.round(members.reduce((a, b) => a + (b.cp || 0), 0) / totalMembers);
+    const topGrowth = Math.max(...members.map(m => m.growth || 0));
+    const activeClasses = [...new Set(members.map(m => m.class))].length;
 
-  const tbody = document.getElementById("leaderboardBody");
-  tbody.innerHTML = members.map(m => {
-    // Get latest CP for the current week
-    const weekLabel = getCurrentWeekLabel();
-    const latestWeekEntry = m.weeklyCP?.find(w => w.week === weekLabel) || {};
-    return `
-      <tr class="border-b border-gray-700 hover:bg-gray-700 fade-in">
-        <td class="py-3 font-bold">#${m.rank || '-'}</td>
-        <td class="py-3 flex items-center space-x-3">
-          <img src="${m.avatar || 'https://i.imgur.com/Bo3ZY5vm.jpg'}" class="w-10 h-10 rounded-full">
-          <span>${m.name}</span>
-        </td>
-        <td class="py-3"><span class="class-badge ${m.classColor || 'bg-gray-500'}">${m.class}</span></td>
-        <td class="py-3 font-bold">${(latestWeekEntry.cp ?? m.cp ?? 0).toLocaleString()}</td>
-        <td class="py-3 ${latestWeekEntry.growth >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">
-          ${latestWeekEntry.growth >= 0 ? '+' : ''}${(latestWeekEntry.growth ?? m.growth ?? 0).toLocaleString()}
-        </td>
-        <td class="py-3">${weekLabel}</td>
-      </tr>
-    `;
-  }).join('');
+    document.getElementById("totalMembers").textContent = totalMembers;
+    document.getElementById("avgCP").textContent = avgCP.toLocaleString();
+    document.getElementById("topGrowth").textContent = topGrowth.toLocaleString();
+    document.getElementById("activeClasses").textContent = activeClasses;
 
-  feather.replace();
-}
+    // Render table
+    const tbody = document.getElementById("leaderboardBody");
+    tbody.innerHTML = members.map(m => {
+      const latestWeekEntry = m.weeklyCP?.slice(-1)[0] || {};
+      const weekLabel = latestWeekEntry.week || getCurrentWeekLabel();
+      return `
+        <tr class="border-b border-gray-700 hover:bg-gray-700 fade-in">
+          <td class="py-3 font-bold">#${m.rank || '-'}</td>
+          <td class="py-3 flex items-center space-x-3">
+            <img src="${m.avatar || 'https://i.imgur.com/Bo3ZY5vm.jpg'}" class="w-10 h-10 rounded-full">
+            <span>${m.name}</span>
+          </td>
+          <td class="py-3"><span class="class-badge ${m.classColor || 'bg-gray-500'}">${m.class}</span></td>
+          <td class="py-3 font-bold">${(latestWeekEntry.cp ?? m.cp ?? 0).toLocaleString()}</td>
+          <td class="py-3 ${latestWeekEntry.growth >= 0 ? 'text-green-400' : 'text-red-400'} font-bold">
+            ${latestWeekEntry.growth >= 0 ? '+' : ''}${(latestWeekEntry.growth ?? m.growth ?? 0).toLocaleString()}
+          </td>
+          <td class="py-3">${weekLabel}</td>
+        </tr>
+      `;
+    }).join('');
 
-loadLeaderboard();
-setInterval(loadLeaderboard, 15000);
-  </script>
+    feather.replace();
+  }
 
-<!-- 📊 Analytics Section -->
-  <section class="py-12">
-    <div class="container mx-auto px-6">
-      <div class="bg-gray-800 rounded-xl p-6 shadow-lg mb-12">
-        <h3 class="text-2xl font-bold mb-6">Class Average Combat Power</h3>
-        <div class="h-96">
-          <canvas id="classAvgChart"></canvas>
-        </div>
-      </div>
+  // --- Sort Function ---
+  function sortLeaderboard(key) {
+    if (currentSort.key === key) currentSort.asc = !currentSort.asc;
+    else currentSort = { key, asc: true };
+    loadLeaderboard();
+  }
 
-      <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
-        <h3 class="text-2xl font-bold mb-6">Guild Weekly CP Growth (Last 4 Weeks)</h3>
-        <div class="h-96">
-          <canvas id="weeklyGrowthChart"></canvas>
-        </div>
-      </div>
-    </div>
-  </section>
+  loadLeaderboard();
+  setInterval(loadLeaderboard, 15000);
+</script>
 
-  <script>
-    // --- 📊 Charts for Analytics ---
-    async function loadAnalytics() {
-      const snapshot = await membersRef.get();
-      const members = snapshot.docs.map(doc => doc.data());
-      if (!members.length) return;
+<script>
+  // --- 📊 Charts for Analytics ---
+  async function loadAnalytics() {
+    const snapshot = await membersRef.get();
+    const members = snapshot.docs.map(doc => doc.data());
+    if (!members.length) return;
 
-      // ----- Class Average CP -----
-      const classGroups = {};
-      members.forEach(m => {
-        if (!classGroups[m.class]) classGroups[m.class] = [];
-        classGroups[m.class].push(m.cp || 0);
-      });
+    // ----- Class Average CP -----
+    const classGroups = {};
+    members.forEach(m => {
+      if (!classGroups[m.class]) classGroups[m.class] = [];
+      classGroups[m.class].push(m.cp || 0);
+    });
 
-      const classLabels = Object.keys(classGroups);
-      const classAverages = classLabels.map(c =>
-        Math.round(classGroups[c].reduce((a, b) => a + b, 0) / classGroups[c].length)
-      );
+    const classLabels = Object.keys(classGroups);
+    const classAverages = classLabels.map(c =>
+      Math.round(classGroups[c].reduce((a, b) => a + b, 0) / classGroups[c].length)
+    );
 
-      const classCtx = document.getElementById("classAvgChart").getContext("2d");
-      new Chart(classCtx, {
-        type: "bar",
-        data: {
-          labels: classLabels,
-          datasets: [{
-            label: "Average Combat Power",
-            data: classAverages,
-            backgroundColor: "rgba(59,130,246,0.6)",
-            borderColor: "#3b82f6",
-            borderWidth: 2,
-            borderRadius: 8
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
-            x: { grid: { color: "rgba(255,255,255,0.1)" } }
-          }
+    const classCtx = document.getElementById("classAvgChart").getContext("2d");
+    new Chart(classCtx, {
+      type: "bar",
+      data: {
+        labels: classLabels,
+        datasets: [{
+          label: "Average Combat Power",
+          data: classAverages,
+          backgroundColor: "rgba(59,130,246,0.6)",
+          borderColor: "#3b82f6",
+          borderWidth: 2,
+          borderRadius: 8
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, grid: { color: "rgba(255,255,255,0.1)" } },
+          x: { grid: { color: "rgba(255,255,255,0.1)" } }
         }
+      }
+    });
+
+    // ----- Guild Weekly Growth (Last 4 Weeks) -----
+    const weekLabelsSet = new Set();
+    const weekTotals = {};
+
+    members.forEach(m => {
+      (m.weeklyCP || []).forEach(w => {
+        weekLabelsSet.add(w.week);
+        if (!weekTotals[w.week]) weekTotals[w.week] = 0;
+        weekTotals[w.week] += w.cp || 0;
       });
+    });
 
-      // ----- Guild Weekly Growth -----
-      const weekLabels = [];
-      const weekTotals = {};
+    const weekLabels = Array.from(weekLabelsSet).sort(); // sorted chronologically
+    const weeklyValues = weekLabels.map(week => Math.round((weekTotals[week] || 0) / members.length));
 
-      members.forEach(m => {
-        (m.weeklyCP || []).forEach(w => {
-          if (!weekTotals[w.week]) weekTotals[w.week] = 0;
-          weekTotals[w.week] += w.cp || 0;
-        });
-      });
-
-      Object.keys(weekTotals).sort().forEach(week => {
-        weekLabels.push(week);
-      });
-
-      const weeklyValues = weekLabels.map(week => weekTotals[week] / members.length);
-
-      const weeklyCtx = document.getElementById("weeklyGrowthChart").getContext("2d");
-      new Chart(weeklyCtx, {
-        type: "line",
-        data: {
-          labels: weekLabels,
-          datasets: [{
-            label: "Average CP Growth",
-            data: weeklyValues,
-            borderColor: "#10b981",
-            backgroundColor: "rgba(16,185,129,0.15)",
-            tension: 0.4,
-            fill: true
-          }]
-        },
-        options: {
-          responsive: true,
-          plugins: { legend: { display: false } },
-          scales: {
-            y: { beginAtZero: false, grid: { color: "rgba(255,255,255,0.1)" } },
-            x: { grid: { color: "rgba(255,255,255,0.1)" } }
-          }
+    const weeklyCtx = document.getElementById("weeklyGrowthChart").getContext("2d");
+    new Chart(weeklyCtx, {
+      type: "line",
+      data: {
+        labels: weekLabels,
+        datasets: [{
+          label: "Average CP Growth",
+          data: weeklyValues,
+          borderColor: "#10b981",
+          backgroundColor: "rgba(16,185,129,0.15)",
+          tension: 0.4,
+          fill: true
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: false, grid: { color: "rgba(255,255,255,0.1)" } },
+          x: { grid: { color: "rgba(255,255,255,0.1)" } }
         }
-      });
-    }
+      }
+    });
+  }
 
-    // Call analytics after leaderboard loads
-    setTimeout(loadAnalytics, 2000);
-  </script>
+  // Load analytics after leaderboard loads
+  setTimeout(loadAnalytics, 2000);
+</script>
 </body>
 </html>
