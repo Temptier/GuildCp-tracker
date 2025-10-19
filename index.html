@@ -408,31 +408,58 @@ document.getElementById('update-cp-form').addEventListener('submit', async e => 
       window.location.href = `members-detail.html?id=${memberId}`;
     }
 
-    // Guild CP Progress Chart
-    const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
-    const guildProgressChart = new Chart(guildCtx, {
-      type:'line',
-      data:{labels:['Week 1','Week 2','Week 3','Week 4'], datasets:[{label:'Average Guild CP', data:[0,0,0,0], borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.1)', tension:0.4, fill:true}]},
-      options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false}}}
+   // Guild CP Progress Chart
+const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
+const guildProgressChart = new Chart(guildCtx, {
+  type: 'line',
+  data: {
+    labels: [], // will be updated dynamically
+    datasets: [{
+      label: 'Average Guild CP',
+      data: [],
+      borderColor: '#fbbf24',
+      backgroundColor: 'rgba(251,191,36,0.1)',
+      tension: 0.4,
+      fill: true
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false } },
+    scales: { y: { beginAtZero: false } }
+  }
+});
+
+// Helper — get last 4 weeks from all members
+function getLast4WeekLabels(members) {
+  const allWeeks = new Set();
+  members.forEach(m => m.weeklyCP?.forEach(w => allWeeks.add(w.week)));
+  const sortedWeeks = Array.from(allWeeks).sort((a,b) => {
+    const [sundayA] = a.split(' - ');
+    const [sundayB] = b.split(' - ');
+    return new Date(sundayA) - new Date(sundayB);
+  });
+  return sortedWeeks.slice(-4); // last 4 weeks
+}
+
+function updateGuildChart() {
+  membersRef.get().then(snapshot => {
+    const members = snapshot.docs.map(doc => doc.data());
+    const weekLabels = getLast4WeekLabels(members);
+    const avgCPPerWeek = weekLabels.map(week => {
+      const weekCPs = members.map(m => m.weeklyCP?.find(w => w.week === week)?.cp || 0);
+      return weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
     });
 
-    function updateGuildChart(){
-      membersRef.get().then(snapshot=>{
-        const members = snapshot.docs.map(doc=>doc.data());
-        const allWeeks = new Set();
-        members.forEach(m=>m.weeklyCP?.forEach(w=>allWeeks.add(w.week)));
-        const weekLabels = Array.from(allWeeks).slice(-4);
-        const avgCPPerWeek = weekLabels.map(week=>{
-          const weekCPs = members.map(m => m.weeklyCP?.find(w=>w.week===week)?.cp || 0);
-          return weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
-        });
-        guildProgressChart.data.labels = weekLabels;
-        guildProgressChart.data.datasets[0].data = avgCPPerWeek;
-        guildProgressChart.update();
-      });
-    }
-    updateGuildChart();
-    setInterval(updateGuildChart,10000);
+    guildProgressChart.data.labels = weekLabels;
+    guildProgressChart.data.datasets[0].data = avgCPPerWeek;
+    guildProgressChart.update();
+  });
+}
+
+updateGuildChart();
+setInterval(updateGuildChart, 10000);
 
     // Vanta Globe
     VANTA.GLOBE({ el:"#vanta-globe", mouseControls:true, touchControls:true, gyroControls:false, minHeight:200, minWidth:200, scale:1, scaleMobile:1, color:0xffd700, backgroundColor:0x667eea });
