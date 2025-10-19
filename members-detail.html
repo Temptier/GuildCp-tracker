@@ -111,8 +111,7 @@
     </div>
   </section>
 
-  <script>
-  // === Firebase Config ===
+ <script>
   const firebaseConfig = {
     apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
     authDomain: "guildcombatpower.firebaseapp.com",
@@ -124,62 +123,48 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // === Get Member ID ===
-  function getQueryParam(param) {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get(param);
-  }
-  const memberId = getQueryParam('id');
+  const memberId = new URLSearchParams(window.location.search).get("id");
   let memberData = null;
   let memberChart = null;
 
-  // === Render Member ===
   function renderMemberData(m) {
     if (!m) return;
 
-    // Header
     document.querySelector('h2').textContent = m.name || "Unknown";
     const classBadge = document.querySelector('.class-badge');
     classBadge.textContent = m.class || "Unknown";
     classBadge.className = "class-badge " + (m.classColor || "bg-gray-500");
     document.querySelector('img').src = m.avatar || "https://via.placeholder.com/200";
 
-    // Stats
     const stats = document.querySelectorAll(".text-2xl.font-bold");
     stats[0].textContent = (m.cp || 0).toLocaleString();
     stats[1].textContent = ((m.growth || 0) >= 0 ? "+" : "") + (m.growth || 0).toLocaleString();
     stats[2].textContent = "#" + (m.rank || "-");
     stats[3].textContent = "Week " + ((m.weeklyCP?.length) || 1);
 
-    // Weekly Data (with fallback)
-    const tbody = document.querySelector("tbody");
+    // ✅ FIX: Ensure weekly data always valid
     const weeklyData = Array.isArray(m.weeklyCP) && m.weeklyCP.length > 0
       ? m.weeklyCP
       : [{ week: "Week 1", cp: m.cp || 0, growth: 0, rank: m.rank || "-" }];
 
-    // Debug
-    console.log("Loaded weeklyCP:", weeklyData);
+    // === Table ===
+    const tbody = document.querySelector("tbody");
+    tbody.innerHTML = weeklyData.map(w => `
+      <tr class="border-b border-gray-700">
+        <td class="py-3">${w.week}</td>
+        <td class="py-3 font-bold">${(w.cp || 0).toLocaleString()}</td>
+        <td class="py-3 text-green-400">${(w.growth >= 0 ? "+" : "") + (w.growth || 0).toLocaleString()}</td>
+        <td class="py-3">${w.rank || "-"}</td>
+      </tr>
+    `).join("");
 
-    // Table
-    tbody.innerHTML = weeklyData
-      .map(w => `
-        <tr class="border-b border-gray-700">
-          <td class="py-3">${w.week || "?"}</td>
-          <td class="py-3 font-bold">${(w.cp || 0).toLocaleString()}</td>
-          <td class="py-3 text-green-400">${(w.growth >= 0 ? "+" : "") + (w.growth || 0).toLocaleString()}</td>
-          <td class="py-3">${w.rank || "-"}</td>
-        </tr>
-      `)
-      .join("");
-
-    // Chart
+    // === Chart ===
     const ctx = document.getElementById("memberProgressChart").getContext("2d");
     if (memberChart) memberChart.destroy();
-
     memberChart = new Chart(ctx, {
       type: "line",
       data: {
-        labels: weeklyData.map(w => w.week || ""),
+        labels: weeklyData.map(w => w.week),
         datasets: [{
           label: "Combat Power",
           data: weeklyData.map(w => w.cp || 0),
@@ -203,21 +188,15 @@
     feather.replace();
   }
 
-  // === Listen Live to Member Updates ===
+  // ✅ Real-time listener (always updates)
   if (memberId) {
     db.collection("members").doc(memberId).onSnapshot(doc => {
       if (doc.exists) {
         memberData = doc.data();
         renderMemberData(memberData);
-      } else {
-        alert("Member not found");
-      }
-    }, err => {
-      console.error("Error fetching live data:", err);
-    });
-  } else {
-    alert("No member ID provided");
-  }
+      } else alert("Member not found");
+    }, err => console.error("Error live updating:", err));
+  } else alert("No member ID provided");
 
   // === Update CP ===
   document.getElementById("updateCP").addEventListener("click", async () => {
@@ -237,7 +216,6 @@
       growth: growth,
       weeklyCP: updatedWeekly
     });
-
     alert("Combat Power updated!");
   });
 
