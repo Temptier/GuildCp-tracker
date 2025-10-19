@@ -198,8 +198,7 @@
 
     // Fetch member
     if(memberId){
-      db.collection('members').doc(memberId).get()
-        .then(doc=>renderMemberData(doc))
+      db.collection('members').doc(memberId).onSnapshot(doc => renderMemberData(doc));
         .catch(err=>alert("Error fetching member: "+err));
     } else alert("No member ID provided");
 
