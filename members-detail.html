@@ -107,15 +107,20 @@
 
     // Helper: week label
     function getCurrentWeekLabel() {
-      const now = new Date();
-      const day = now.getDay();
-      const sunday = new Date(now);
-      sunday.setDate(now.getDate() - day);
-      const saturday = new Date(sunday);
-      saturday.setDate(saturday.getDate() + 6);
-      const format = d => d.toISOString().split("T")[0];
-      return `${format(sunday)} - ${format(saturday)}`;
-    }
+  const today = new Date();
+  const day = today.getDay(); // 0 = Sunday
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - day);
+  const saturday = new Date(sunday);
+  saturday.setDate(sunday.getDate() + 6);
+
+  const formatLabel = d => {
+    const options = { month: 'short', day: 'numeric' };
+    return d.toLocaleDateString('en-US', options);
+  };
+
+  return `${formatLabel(sunday)} - ${formatLabel(saturday)}`;
+}
 
     // === 🧾 Load member data ===
     async function loadMember() {
