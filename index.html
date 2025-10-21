@@ -24,7 +24,6 @@
   </style>
 </head>
 <body class="bg-gray-900 text-white font-['Inter']">
-
   <!-- Navigation -->
   <nav class="bg-gray-800 py-4 px-6 flex justify-between items-center sticky top-0 z-50 shadow-lg">
     <div class="flex items-center space-x-2">
@@ -34,7 +33,6 @@
     <div class="hidden md:flex space-x-6">
       <a href="#dashboard" class="hover:text-yellow-400 transition-colors">Dashboard</a>
       <a href="#members" class="hover:text-yellow-400 transition-colors">Members</a>
-      <a href="#leaderboards" class="hover:text-yellow-400 transition-colors">Leaderboards</a>
       <a href="#admin" class="hover:text-yellow-400 transition-colors">Admin</a>
     </div>
     <button class="md:hidden">
@@ -49,11 +47,6 @@
       <div class="max-w-3xl mx-auto text-center">
         <h2 class="text-5xl md:text-6xl font-bold mb-6 medieval-font">CELESTIALS</h2>
         <p class="text-xl mb-8 text-gray-200">Track your guild's Combat Power progression and dominate the rankings!</p>
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href="leaderboards.html" class="frosted-glass border border-white/30 hover:bg-white/10 text-white font-bold py-3 px-8 rounded-lg transition-all inline-block">
-            View Leaderboard
-          </a>
-        </div>
       </div>
     </div>
   </section>
@@ -116,19 +109,15 @@
     <div class="container mx-auto px-6">
       <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Guild Members</h2>
       <div class="flex flex-wrap gap-2 mb-8 justify-center" id="class-filters"></div>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="members-grid">
-        <!-- Members loaded from Firestore -->
-      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="members-grid"></div>
     </div>
   </section>
 
-  <!-- Admin Section -->
+<!-- Admin Section -->
   <section id="admin" class="py-16 bg-gray-900">
     <div class="container mx-auto px-6">
       <h2 class="text-3xl font-bold mb-12 text-center medieval-font">Admin Dashboard</h2>
-
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-
         <!-- Add Member Form -->
         <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
           <h3 class="text-xl font-bold mb-6">Add New Member</h3>
@@ -155,8 +144,6 @@
         <!-- Update/Delete CP & Member -->
         <div class="bg-gray-800 rounded-xl p-6 shadow-lg">
           <h3 class="text-xl font-bold mb-4">Update / Delete Member</h3>
-
-          <!-- Update CP -->
           <form id="update-cp-form" class="space-y-4">
             <select id="update-member-select" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
               <option value="">Select Member</option>
@@ -164,31 +151,57 @@
             <input type="number" id="update-cp-value" placeholder="New CP" class="w-full bg-gray-700 border border-gray-600 rounded-lg px-4 py-3" required>
             <button type="submit" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 rounded-lg">Update CP</button>
           </form>
-
-          <!-- Delete Member -->
           <button id="delete-member-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-3 rounded-lg mt-4">Delete Selected Member</button>
         </div>
-
       </div>
     </div>
   </section>
 
-<!-- Firebase Config & Script -->
+  <!-- Member Detail Modal -->
+  <div id="memberModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50">
+    <div class="bg-gray-800 rounded-xl shadow-lg max-w-lg w-full p-6 relative">
+      <button id="closeModal" class="absolute top-3 right-3 text-gray-300 hover:text-white text-xl font-bold">&times;</button>
+      <div class="flex flex-col items-center space-y-4">
+        <img id="modalAvatar" src="" alt="Avatar" class="w-24 h-24 rounded-full border-2 border-yellow-400">
+        <h2 id="modalName" class="text-2xl font-bold medieval-font">Member Name</h2>
+        <span id="modalClass" class="class-badge bg-blue-500 text-white">Class</span>
+        <p class="mt-2">Current CP: <span id="modalCP">0</span> | Growth: <span id="modalGrowth">0</span></p>
+      </div>
+      <div class="mt-6 h-48">
+        <canvas id="modalChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase & Scripts -->
   <script>
-    // Initialize Firebase
-    const firebaseConfig = {
-      apiKey: "AIzaSyDoim277EKmZDh0TnbZbK5OXy2GdVW-d84",
-      authDomain: "guildcombatpower.firebaseapp.com",
-      projectId: "guildcombatpower",
-      storageBucket: "guildcombatpower.firebasestorage.app",
-      messagingSenderId: "862355543279",
-      appId: "1:862355543279:web:e7d7c1b5ee1f3ba89f371a"
-    };
+    // Firebase Config
+   const firebaseConfig = {
+
+
+  apiKey: "AIzaSyBB5jYS6FPjPDtMUkx8PxcZamOtcq5WDzQ",
+
+
+  authDomain: "combattracker-86058.firebaseapp.com",
+
+
+  projectId: "combattracker-86058",
+
+
+  storageBucket: "combattracker-86058.firebasestorage.app",
+
+
+  messagingSenderId: "383727173287",
+
+
+  appId: "1:383727173287:web:71f4181a5df121bb2a2582"
+
+
+};
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const membersRef = db.collection('members');
 
-    // Default Avatars
     const defaultAvatars = {
       'Bow':'https://i.imgur.com/w8VJlOnm.jpg',
       'Crossbow':'https://i.imgur.com/Omci8iCm.jpg',
@@ -201,292 +214,177 @@
       'Bare Hand':'https://i.imgur.com/Bo3ZY5vm.jpg'
     };
 
-    // Helper — get current week label (Sunday to Saturday, e.g., "Oct-19 - Oct-25")
-function getCurrentWeekLabel() {
-  const today = new Date();
-  const day = today.getDay(); // 0 = Sunday
-  const sunday = new Date(today);
-  sunday.setDate(today.getDate() - day);
-  const saturday = new Date(sunday);
-  saturday.setDate(sunday.getDate() + 6);
+    // Cache members locally
+    let membersCache = [];
 
-  const formatLabel = d => {
-    const options = { month: 'short', day: 'numeric' };
-    return d.toLocaleDateString('en-US', options);
-  };
-
-  return `${formatLabel(sunday)} - ${formatLabel(saturday)}`;
-}
-
-    // Populate Member Dropdowns
-    function populateMemberDropdowns() {
-      const updateSelect = document.getElementById('update-member-select');
-      updateSelect.innerHTML = '<option value="">Select Member</option>';
-      membersRef.get().then(snapshot => {
-        snapshot.docs.forEach(doc => {
-          const m = doc.data();
-          const option = document.createElement('option');
-          option.value = doc.id;
-          option.textContent = m.name;
-          updateSelect.appendChild(option);
-        });
+    // Populate Update Dropdown
+    async function populateMemberDropdowns() {
+      const select = document.getElementById('update-member-select');
+      select.innerHTML = '<option value="">Select Member</option>';
+      const snapshot = await membersRef.get();
+      snapshot.docs.forEach(doc=>{
+        const m = doc.data();
+        const option = document.createElement('option');
+        option.value = doc.id;
+        option.textContent = m.name;
+        select.appendChild(option);
       });
     }
     populateMemberDropdowns();
 
-    // Add Member (prevent duplicate)
-    document.getElementById('add-member-form').addEventListener('submit', async e => {
+    // Add Member
+    document.getElementById('add-member-form').addEventListener('submit', async e=>{
       e.preventDefault();
       const name = document.getElementById('new-member-name').value.trim();
       const cls = document.getElementById('new-member-class').value;
       const cp = parseInt(document.getElementById('new-member-cp').value);
       let avatar = document.getElementById('new-member-avatar').value.trim();
-      if (!avatar) avatar = defaultAvatars[cls] || defaultAvatars['Bare Hand'];
-      const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color || 'bg-gray-500';
-      if (!name || !cls || isNaN(cp)) return alert("Please fill all fields");
+      if(!avatar) avatar = defaultAvatars[cls]||defaultAvatars['Bare Hand'];
+      const color = document.querySelector(`#new-member-class option[value="${cls}"]`)?.dataset.color||'bg-gray-500';
+      if(!name||!cls||isNaN(cp)) return alert("Fill all fields");
 
-      try {
-        const snapshot = await membersRef.get();
-        const exists = snapshot.docs.some(doc => {
-          const data = doc.data();
-          return data.name.toLowerCase() === name.toLowerCase() && data.class === cls;
-        });
-        if (exists) return alert("⚠️ A member with this name and class already exists!");
+      const snapshot = await membersRef.get();
+      const exists = snapshot.docs.some(doc=>doc.data().name.toLowerCase()===name.toLowerCase() && doc.data().class===cls);
+      if(exists) return alert("Member exists!");
 
-        const currentWeek = getCurrentWeekLabel();
-        await membersRef.add({
-          name, class: cls, classColor: color, cp, growth: 0,
-          weeklyCP: [{ week: currentWeek, cp, growth: 0, rank: '-' }],
-          avatar
-        });
+      const weekLabel = getWeekLabel();
+      await membersRef.add({ name, class:cls, classColor:color, cp, growth:0, weeklyCP:[{week:weekLabel, cp, growth:0}], avatar });
+      alert("Member added!");
+      e.target.reset();
+      populateMemberDropdowns();
+      loadMembers();
+    });
 
-        alert("✅ Member added successfully!");
-        e.target.reset();
-        populateMemberDropdowns();
-        updateLeaderboards();
+    // Update CP
+    document.getElementById('update-cp-form').addEventListener('submit', async e=>{
+      e.preventDefault();
+      const id = document.getElementById('update-member-select').value;
+      const newCP = parseInt(document.getElementById('update-cp-value').value);
+      if(!id||isNaN(newCP)) return alert("Select member and enter CP");
 
-      } catch (err) {
-        console.error(err);
-        alert("❌ Failed to add member.");
+      const doc = await membersRef.doc(id).get();
+      if(!doc.exists) return alert("Member not found!");
+      const data = doc.data();
+      const growth = newCP - (data.cp||0);
+      const weekLabel = getWeekLabel();
+
+      let weeklyCP = data.weeklyCP||[];
+      const existing = weeklyCP.find(w=>w.week===weekLabel);
+      if(existing){ existing.cp=newCP; existing.growth=growth; }
+      else { weeklyCP.push({week:weekLabel, cp:newCP, growth}); }
+      if(weeklyCP.length>4) weeklyCP = weeklyCP.slice(-4);
+
+      await membersRef.doc(id).update({cp:newCP, growth, weeklyCP});
+      alert(`Updated CP to ${newCP} (Growth: ${growth>=0?'+':''}${growth})`);
+      document.getElementById('update-cp-value').value="";
+      loadMembers();
+    });
+
+    // Delete Member
+    document.getElementById('delete-member-btn').addEventListener('click', async ()=>{
+      const id = document.getElementById('update-member-select').value;
+      if(!id) return alert("Select member");
+      if(!confirm("Delete member?")) return;
+      await membersRef.doc(id).delete();
+      alert("Deleted");
+      populateMemberDropdowns();
+      loadMembers();
+    });
+
+    // Week Label Helper
+    function getWeekLabel(){
+      const now = new Date();
+      const day = now.getDay();
+      const sunday = new Date(now); sunday.setDate(now.getDate()-day);
+      const saturday = new Date(sunday); saturday.setDate(sunday.getDate()+6);
+      const format = d=>d.toLocaleDateString('en-US',{month:'short', day:'numeric'});
+      return `${format(sunday)} - ${format(saturday)}`;
+    }
+
+    // Load Members and update dashboard
+    async function loadMembers(){
+      const snapshot = await membersRef.get();
+      membersCache = snapshot.docs.map(doc=>({id:doc.id,...doc.data()}));
+
+      // Dashboard
+      document.getElementById('total-members').textContent = membersCache.length;
+      document.getElementById('avg-cp').textContent = membersCache.length?Math.round(membersCache.reduce((a,b)=>a+b.cp,0)/membersCache.length).toLocaleString():0;
+      document.getElementById('top-growth').textContent = membersCache.length?Math.max(...membersCache.map(m=>m.growth||0)).toLocaleString():0;
+      document.getElementById('active-classes').textContent = [...new Set(membersCache.map(m=>m.class))].length+'/9';
+
+      // Members grid
+      const grid = document.getElementById('members-grid');
+      grid.innerHTML = membersCache.map(m=>`
+        <div class="bg-gray-800 rounded-xl p-6 shadow-lg border border-gray-400 cursor-pointer hover:shadow-xl transition-all" onclick="viewMember('${m.id}')">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center space-x-3">
+              <img src="${m.avatar||defaultAvatars[m.class]}" alt="${m.name}" class="w-12 h-12 rounded-full">
+              <div>
+                <h4 class="font-bold">${m.name}</h4>
+                <span class="class-badge ${m.classColor} text-white">${m.class}</span>
+              </div>
+            </div>
+            <div class="achievement-badge bg-yellow-500 text-gray-900 rounded-full p-2">
+              <i data-feather="star"></i>
+            </div>
+          </div>
+          <div class="mb-4">
+            <div class="flex justify-between text-sm mb-1">
+              <span>Current CP: ${m.cp.toLocaleString()}</span>
+              <span class="text-green-400">${m.growth>=0?'+':''}${(m.growth||0).toLocaleString()}</span>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-2">
+              <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width:${Math.min(100,(m.cp/20000)*100)}%"></div>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      feather.replace();
+    }
+    loadMembers();
+
+    // === View Member in Modal ===
+    let modalChartInstance = null;
+    function viewMember(id){
+      const m = membersCache.find(x=>x.id===id);
+      if(!m) return;
+
+      document.getElementById('modalAvatar').src = m.avatar||defaultAvatars[m.class];
+      document.getElementById('modalName').textContent = m.name;
+      document.getElementById('modalClass').textContent = m.class;
+      document.getElementById('modalCP').textContent = m.cp.toLocaleString();
+      document.getElementById('modalGrowth').textContent = (m.growth>=0?'+':'')+m.growth.toLocaleString();
+
+      const ctx = document.getElementById('modalChart').getContext('2d');
+      const weeks = m.weeklyCP?.map(w=>w.week)||[];
+      const cpValues = m.weeklyCP?.map(w=>w.cp)||[];
+
+      if(modalChartInstance) modalChartInstance.destroy();
+      modalChartInstance = new Chart(ctx,{
+        type:'line',
+        data:{ labels:weeks, datasets:[{label:'CP', data:cpValues, borderColor:'#fbbf24', backgroundColor:'rgba(251,191,36,0.15)', tension:0.4, fill:true }]},
+        options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:false},x:{grid:{color:"rgba(255,255,255,0.1)"}}} }
+      });
+
+      document.getElementById('memberModal').classList.remove('hidden');
+      document.getElementById('memberModal').classList.add('flex');
+    }
+
+    document.getElementById('closeModal').addEventListener('click',()=>{
+      document.getElementById('memberModal').classList.add('hidden');
+      document.getElementById('memberModal').classList.remove('flex');
+    });
+
+    // Optional: close modal when clicking outside
+    document.getElementById('memberModal').addEventListener('click', (e)=>{
+      if(e.target.id==='memberModal'){
+        document.getElementById('memberModal').classList.add('hidden');
+        document.getElementById('memberModal').classList.remove('flex');
       }
     });
 
-   // === 🗓️ Update CP (Grouped by Real Calendar Weeks, Local Timezone Aware) ===
-document.getElementById('update-cp-form').addEventListener('submit', async e => {
-  e.preventDefault();
-  const memberId = document.getElementById('update-member-select').value;
-  const newCP = parseInt(document.getElementById('update-cp-value').value);
-  if (!memberId || isNaN(newCP)) return alert("Select a member and enter a valid CP value.");
-
-  try {
-    const memberDoc = membersRef.doc(memberId);
-    const docSnap = await memberDoc.get();
-    if (!docSnap.exists) return alert("Member not found!");
-    const data = docSnap.data();
-
-    const oldCP = data.cp || 0;
-    const growth = newCP - oldCP;
-    const weeklyCP = data.weeklyCP || [];
-
-    // --- 🗓️ Determine current Sunday-to-Saturday week label (LOCAL TIME) ---
-    const now = new Date();
-    const localNow = new Date(now.getTime() - now.getTimezoneOffset() * 60000); // adjust for local offset
-    const day = localNow.getDay(); // 0 = Sunday
-    const sunday = new Date(localNow);
-    sunday.setDate(localNow.getDate() - day);
-    const saturday = new Date(sunday);
-    saturday.setDate(sunday.getDate() + 6);
-
-    // ✅ Format: Oct-19 - Oct-25
-    const formatShortDate = d => d.toLocaleString('en-US', { month: 'short', day: '2-digit' });
-    const weekLabel = `${formatShortDate(sunday)} - ${formatShortDate(saturday)}`;
-
-    // --- 🧠 Find or update existing week entry ---
-    const existingWeekIndex = weeklyCP.findIndex(w => w.week === weekLabel);
-    if (existingWeekIndex !== -1) {
-      weeklyCP[existingWeekIndex].cp = newCP;
-      weeklyCP[existingWeekIndex].growth = growth;
-    } else {
-      weeklyCP.push({
-        week: weekLabel,
-        cp: newCP,
-        growth: growth,
-        rank: '-'
-      });
-    }
-
-    // --- 🧹 Keep only the last 4 weeks ---
-    if (weeklyCP.length > 4) {
-      weeklyCP.splice(0, weeklyCP.length - 4);
-    }
-
-    // --- 💾 Update Firestore ---
-    await memberDoc.update({
-      cp: newCP,
-      growth: growth,
-      weeklyCP: weeklyCP
-    });
-
-    alert(`✅ Combat Power updated successfully! Growth: ${growth >= 0 ? '+' : ''}${growth}`);
-    document.getElementById('update-cp-form').reset();
-    populateMemberDropdowns();
-    updateLeaderboards();
-
-  } catch (error) {
-    console.error("Error updating CP:", error);
-    alert("❌ Failed to update CP. Check console for details.");
-  }
-});
-
-    // Delete Member
-    document.getElementById('delete-member-btn').addEventListener('click', () => {
-      const memberId = document.getElementById('update-member-select').value;
-      if (!memberId) return alert("Select a member to delete");
-      if (!confirm("Are you sure you want to delete this member?")) return;
-
-      membersRef.doc(memberId).delete().then(() => {
-        alert("Member deleted!");
-        populateMemberDropdowns();
-        updateLeaderboards();
-      });
-    });
-
-    // Leaderboards & Guild Summary
-    const totalMembersEl = document.getElementById('total-members');
-    const avgCPEl = document.getElementById('avg-cp');
-    const topGrowthEl = document.getElementById('top-growth');
-    const activeClassesEl = document.getElementById('active-classes');
-    const membersGrid = document.getElementById('members-grid');
-
-    function updateLeaderboards() {
-      membersRef.get().then(snapshot => {
-        const members = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        totalMembersEl.textContent = members.length;
-        avgCPEl.textContent = members.length ? Math.round(members.reduce((a,b)=>a+b.cp,0)/members.length).toLocaleString() : 0;
-        topGrowthEl.textContent = members.length ? Math.max(...members.map(m=>m.growth||0)).toLocaleString() : 0;
-        const activeClasses = [...new Set(members.map(m => m.class))];
-        activeClassesEl.textContent = activeClasses.length + '/9';
-
-        // Sort by CP
-        const ranked = [...members].sort((a,b)=>b.cp-a.cp);
-        ranked.forEach((m,i)=>membersRef.doc(m.id).update({rank:i+1}));
-
-        // Render members
-        membersGrid.innerHTML = members.map(m => `
-          <div class="bg-gray-800 rounded-xl p-6 shadow-lg hover:shadow-xl transition-all">
-            <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center space-x-3">
-                <img src="${m.avatar || defaultAvatars[m.class]}" alt="${m.name}" class="w-12 h-12 rounded-full">
-                <div>
-                  <h4 class="font-bold">${m.name}</h4>
-                  <span class="class-badge ${m.classColor} text-white">${m.class}</span>
-                </div>
-              </div>
-              <div class="achievement-badge bg-yellow-500 text-gray-900 rounded-full p-2">
-                <i data-feather="star"></i>
-              </div>
-            </div>
-            <div class="mb-4">
-              <div class="flex justify-between text-sm mb-1">
-                <span>Current CP: ${m.cp.toLocaleString()}</span>
-                <span class="text-green-400">${m.growth>=0?'+':''}${(m.growth||0).toLocaleString()}</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2">
-                <div class="cp-progress-bar bg-green-500 h-2 rounded-full" style="width:${Math.min(100,(m.cp/20000)*100)}%"></div>
-              </div>
-            </div>
-            <button class="w-full bg-gray-700 hover:bg-gray-600 py-2 rounded-lg transition-colors" onclick="viewMemberDetail('${m.id}')">View Progress</button>
-          </div>
-        `).join('');
-        feather.replace();
-      });
-    }
-    updateLeaderboards();
-    setInterval(updateLeaderboards, 10000);
-
-    function viewMemberDetail(memberId) {
-      window.location.href = `members-detail.html?id=${memberId}`;
-    }
-
-   // Guild CP Progress Chart
-const guildCtx = document.getElementById('guildProgressChart').getContext('2d');
-const guildProgressChart = new Chart(guildCtx, {
-  type: 'line',
-  data: {
-    labels: [], // will be updated dynamically
-    datasets: [{
-      label: 'Average Guild CP',
-      data: [],
-      borderColor: '#fbbf24',
-      backgroundColor: 'rgba(251,191,36,0.1)',
-      tension: 0.4,
-      fill: true
-    }]
-  },
-  options: {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: false } }
-  }
-});
-
-// Helper — get last 4 unique week labels
-function getLast4WeekLabels(members) {
-  const allWeeks = new Set();
-  members.forEach(m => {
-    const latestPerWeek = {};
-    m.weeklyCP?.forEach(w => latestPerWeek[w.week] = w.cp); // only last update counts
-    Object.keys(latestPerWeek).forEach(w => allWeeks.add(w));
-  });
-  const sortedWeeks = Array.from(allWeeks).sort((a,b) => {
-    const [sundayA] = a.split(' - ');
-    const [sundayB] = b.split(' - ');
-    return new Date(sundayA) - new Date(sundayB);
-  });
-  return sortedWeeks.slice(-4); // last 4 weeks
-}
-
-function updateGuildChart() {
-  membersRef.get().then(snapshot => {
-    const members = snapshot.docs.map(doc => doc.data());
-    const weekLabels = getLast4WeekLabels(members);
-
-    const avgCPPerWeek = weekLabels.map(week => {
-      const weekCPs = members.map(m => {
-        // pick the latest update in that week
-        const entries = m.weeklyCP?.filter(w => w.week === week);
-        return entries?.length ? entries[entries.length - 1].cp : 0;
-      });
-      return weekCPs.length ? Math.round(weekCPs.reduce((a,b)=>a+b,0)/weekCPs.length) : 0;
-    });
-
-    guildProgressChart.data.labels = weekLabels;
-    guildProgressChart.data.datasets[0].data = avgCPPerWeek;
-    guildProgressChart.update();
-  });
-}
-
-updateGuildChart();
-setInterval(updateGuildChart, 10000);
-
-    // Vanta Globe
-    VANTA.GLOBE({ el:"#vanta-globe", mouseControls:true, touchControls:true, gyroControls:false, minHeight:200, minWidth:200, scale:1, scaleMobile:1, color:0xffd700, backgroundColor:0x667eea });
-
-    // Mobile Menu Toggle
-    document.querySelector('button.md\\:hidden').addEventListener('click',function(){
-      const nav=document.querySelector('.hidden.md\\:flex');
-      nav.classList.toggle('hidden');
-      nav.classList.toggle('flex');
-      nav.classList.toggle('flex-col');
-      nav.classList.toggle('absolute');
-      nav.classList.toggle('top-16');
-      nav.classList.toggle('left-0');
-      nav.classList.toggle('right-0');
-      nav.classList.toggle('bg-gray-800');
-      nav.classList.toggle('p-4');
-      nav.classList.toggle('space-y-4');
-    });
+    // === Update dashboard periodically (optional) ===
+    setInterval(loadMembers, 10000); // refresh every 10 sec
   </script>
 </body>
 </html>
